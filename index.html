@@ -18,27 +18,17 @@
 				<input id="toggle-all" type="checkbox">
 				<label for="toggle-all">Mark all as complete</label>
 				<ul id="todo-list">
-
-<!--
-					#완료했을때
-					<li class="completed">
+<script id="item" type="text/x-handlebars-template">
+					{{#item}}
+					<li class="{{completed}}">
 						<div class="view">
-							<input class="toggle" type="checkbox" checked>
-							<label>타이틀</label>
-							<button class="destroy"></button>
-						</div>
-					</li>
--->
-
-					<li class="{}">
-						<div class="view">
-							<input class="toggle" type="checkbox" {}>
+							<input class="toggle" type="checkbox">
 							<label>{{title}}</label>
 							<button class="destroy"></button>
 						</div>
 					</li>
-
-
+					{{/item}}
+</script>
 				</ul>
 			</section>
 			<footer id="footer">

@@ -1,13 +1,32 @@
-var ssss = '<div class="view"><input class="toggle" type="checkbox"><label>타이틀</label><button class="destroy"></button></div>';
-var elNewTodo = $('<li></li>');
-elNewTodo.html(ssss);
+TODO = {
+  item : null,
+  board : null,
+  template : function(){},
+  data : {},
+};
+TODO.init = function () {
+  TODO.item = $('#item');
+  TODO.board = $('#todo-list');
+  TODO.template = Handlebars.compile(TODO.item.html());
+  TODO.board.append(TODO.template(TODO.data));
+  TODO.data = {item : []};
+};
+TODO.addItem = function (sContents) {
+  TODO.data.item.push({title:sContents,completed:''});
+};
+TODO.update = function () {
+  // debugger;
+  TODO.board.html(TODO.template(TODO.data));
+};
 
 $(document).ready(function () {
+  TODO.init();
   $('#new-todo').on('keypress', function(event) {
     if(event.keyCode === 13) {
-      var newItem = elNewTodo.clone();
-      $('label', newItem).text($('#new-todo').val());
-      $('#todo-list').append(newItem);
+      var sContents = $('#new-todo').val();
+      TODO.addItem(sContents);
+      console.log(TODO.data);
+      TODO.update();
       $('#new-todo').val('');
     }
   });
