@@ -12,7 +12,15 @@ $(document).ready(function () {
     }
   });
   $('#todo-list').on('click', 'input.toggle', function() {
-    console.log('destroy ',$(this), $(this).closest('li'));
+    console.log('complete ',$(this), $(this).closest('li'));
     $(this).closest('li').addClass('completed');
+  })
+  $('#todo-list').on('click', 'button.destroy', function() {
+    console.log('destroy ',$(this).closest('div'));
+    $(this).closest('div').fadeOut('slow', function() {
+      // 왜 li 가 아니고 div?
+      console.log($(this), $(this).parent('li'));
+      $(this).parent('li').remove();
+    });
   })
 });
