@@ -5,11 +5,14 @@ elNewTodo.html(ssss);
 $(document).ready(function () {
   $('#new-todo').on('keypress', function(event) {
     if(event.keyCode === 13) {
-      console.log("Enter key pressed");
       var newItem = elNewTodo.clone();
       $('label', newItem).text($('#new-todo').val());
       $('#todo-list').append(newItem);
       $('#new-todo').val('');
     }
   });
+  $('#todo-list').on('click', 'input.toggle', function() {
+    console.log('destroy ',$(this), $(this).closest('li'));
+    $(this).closest('li').addClass('completed');
+  })
 });
