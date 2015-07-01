@@ -5,6 +5,16 @@
 		<title>HTML5 Programming - 1 Class</title>
 		<link rel="stylesheet" href="asset/base.css">
 		<script type="text/javascript" src="asset/todolist.js"></script>
+		<script type="text/javascript" src="asset/handlebars-v3.0.3.js"></script>
+		<script id="todo-template" type="text/x-handlebars-template">
+			<li class="{}">
+				<div class="view">
+					<input class="toggle" type="checkbox" {}>
+					<label>{{todo}}</label>
+					<button class="destroy"></button>
+				</div>
+			</li>
+		</script>
 	</head>
 	<body>
 		<section id="todoapp">
