@@ -31,8 +31,11 @@ $(document).ready(function () {
     }
   });
   $('#todo-list').on('click', 'input.toggle', function() {
-    console.log('complete ',$(this), $(this).closest('li'));
-    $(this).closest('li').addClass('completed');
+    // console.log('complete ',$(this), $(this).closest('li'));
+    // $(this).closest('li').toggleClass('completed');
+    var checked = $(this).is(':checked');
+    // console.log(checked);
+    $(this).closest('li').toggleClass('completed', checked);
   })
   $('#todo-list').on('click', 'button.destroy', function() {
     console.log('destroy ',$(this).closest('div'));
