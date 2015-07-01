@@ -35,7 +35,7 @@ $(document).ready(function () {
   $('#todo-list').on('click', 'button.destroy', function() {
     $(this).closest('div').fadeOut('slow', function() {
       // 왜 li 가 아니고 div?
-      $(this).parent('li').remove();
+      $(this).closest('li').remove();
     });
   });
 });
