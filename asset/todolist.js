@@ -15,7 +15,6 @@ TODO.addItem = function (sContents) {
   TODO.data.item.push({title:sContents,completed:''});
 };
 TODO.update = function () {
-  // debugger;
   TODO.board.html(TODO.template(TODO.data));
 };
 
@@ -25,24 +24,18 @@ $(document).ready(function () {
     if(event.keyCode === 13) {
       var sContents = $('#new-todo').val();
       TODO.addItem(sContents);
-      console.log(TODO.data);
       TODO.update();
       $('#new-todo').val('');
     }
   });
   $('#todo-list').on('click', 'input.toggle', function() {
-    // console.log('complete ',$(this), $(this).closest('li'));
-    // $(this).closest('li').toggleClass('completed');
     var checked = $(this).is(':checked');
-    // console.log(checked);
     $(this).closest('li').toggleClass('completed', checked);
-  })
+  });
   $('#todo-list').on('click', 'button.destroy', function() {
-    console.log('destroy ',$(this).closest('div'));
     $(this).closest('div').fadeOut('slow', function() {
       // 왜 li 가 아니고 div?
-      console.log($(this), $(this).parent('li'));
       $(this).parent('li').remove();
     });
-  })
+  });
 });
