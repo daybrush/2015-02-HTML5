@@ -1,3 +1,10 @@
+/*
+* setInterval, clearInterval
+* requestAnimationFrame
+* transition, transform
+* new TODO()
+* 클릭이미됐으면 무시
+*/
 TODO = {
   item : null,
   board : null,
@@ -33,9 +40,22 @@ $(document).ready(function () {
     $(this).closest('li').toggleClass('completed', checked);
   });
   $('#todo-list').on('click', 'button.destroy', function() {
-    $(this).closest('div').fadeOut('slow', function() {
-      // 왜 li 가 아니고 div?
-      $(this).closest('li').remove();
-    });
+    var cacheDiv = $(this).closest('div');
+    // 여전히 li 가 아니고 div. 왜?
+    // li로 하면 매우 오랜 시간이 걸려서 fadeOut 됨.
+    // 심지어 그 속도가 내 숫자와 상관없이 상수인 듯;
+    var _fadeOut = setInterval(function () {
+      var prev = cacheDiv.css('opacity');
+      if(typeof(prev) != "string") prev = 1;
+      if(prev <= 0) {
+        console.log('end!');
+        clearInterval(_fadeOut);
+        console.log(cacheDiv.closest('li').remove());
+      }
+      // console.log(prev, typeof(prev));
+      cacheDiv.css('opacity', prev-0.1);
+      console.log(cacheDiv.css('opacity'));
+    }, 30); // 0.3초 만에 끝나게 하려면, 30ms(==0.03초)마다 0.1씩.
+    // 인데 실제로는 그렇지 않은 느낌. 느리다.
   });
 });
