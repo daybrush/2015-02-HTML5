@@ -11,24 +11,21 @@ function addTODO(e) {
         var i = 0;
         var key = setInterval(function() {
             if(i===50){clearInterval(key);}
-            else {li.css('opacity', i*0.2)}; //js opacity와 jquery opacity가 다른가?
+            // TODO: js opacity와 jquery opacity가 다른가? 0.02하면 안된다.
+            else {li.css('opacity', i*0.2)};
             i++;
         }, 12);
 
         $('#new-todo').val("");
     }
-    $('.toggle').click(completedTODO); //이걸 밑에 실행함수에 넣으면 왜 안되지?
-    $('.destroy').click(removeTODO);
 }
 
 function completedTODO(e){
-    //e.curruntTarget.checked
-    var li = $(this).closest('li');
-    this.checked ? li.addClass('completed') : li.removeClass('completed');
+    $(e.currentTarget).closest('li').toggleClass('completed');;
 }
 
 function removeTODO(e){
-    var li = $(this).closest('li');
+    var li = $(e.currentTarget).closest('li');
     var i = 0;
     var key = setInterval(function() {
         if(i===50){
@@ -41,4 +38,6 @@ function removeTODO(e){
 
 $(function() {
     $('#new-todo').keydown(addTODO);
+    $('#todo-list').on( "click", '.toggle', completedTODO)
+                    .on( "click", '.destroy', removeTODO);
 });
