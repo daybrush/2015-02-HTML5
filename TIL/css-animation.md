@@ -167,6 +167,10 @@ a:link{color:blue}
 - :before: 특정 태그가 시작되기전 바로 앞
 - :after: 특정 태그가 끝나는 곳 바로 뒤
 
+## RequestAnimatedFrame
+https://msdn.microsoft.com/ko-kr/library/hh920765(v=vs.85).aspx
+http://beautifulcode.tistory.com/12
+
 ## Refer
 [MDN CSS animation](https://developer.mozilla.org/ko/docs/Web/CSS/Using_CSS_animations)
 [웹 애니메이션 파헤치기](http://beautifulcss.com/archives/2231)
@@ -174,3 +178,5 @@ a:link{color:blue}
 [CSS 가상 선택자](http://onasaju.tistory.com/249)
 [CSS 가상요소](http://s2junn.tistory.com/58)
 [before after로 animation](https://cssanimation.rocks/pseudo-elements/)
+[creative list effects 만들기](http://sarasoueidan.com/blog/creative-list-effects/)
+[transition on DOM removal](http://stackoverflow.com/questions/7000648/css3-transition-on-dom-removal)
