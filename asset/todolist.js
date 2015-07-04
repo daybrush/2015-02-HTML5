@@ -1,28 +1,25 @@
 /*
-* setInterval, clearInterval
+* Handlebars 사용 방식 변경
+* TODO.removeItem
+* .addItem 할때 애니메이션
+* 클릭이미됐으면 무시
 * requestAnimationFrame
 * transition, transform
 * new TODO()
-* 클릭이미됐으면 무시
 */
 TODO = {
   item : null,
   board : null,
-  template : function(){},
-  data : {},
+  template : function(){}
 };
 TODO.init = function () {
   TODO.item = $('#item');
   TODO.board = $('#todo-list');
   TODO.template = Handlebars.compile(TODO.item.html());
-  TODO.board.append(TODO.template(TODO.data));
-  TODO.data = {item : []};
 };
 TODO.addItem = function (sContents) {
-  TODO.data.item.push({title:sContents,completed:''});
-};
-TODO.update = function () {
-  TODO.board.html(TODO.template(TODO.data));
+  var data = {title:sContents};
+  TODO.board.append(TODO.template(data));
 };
 
 $(document).ready(function () {
@@ -31,7 +28,6 @@ $(document).ready(function () {
     if(event.keyCode === 13) {
       var sContents = $('#new-todo').val();
       TODO.addItem(sContents);
-      TODO.update();
       $('#new-todo').val('');
     }
   });

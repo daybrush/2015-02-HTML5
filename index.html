@@ -19,15 +19,13 @@
 				<label for="toggle-all">Mark all as complete</label>
 				<ul id="todo-list">
 <script id="item" type="text/x-handlebars-template">
-					{{#item}}
-					<li class="{{completed}}">
+					<li>
 						<div class="view">
 							<input class="toggle" type="checkbox">
 							<label>{{title}}</label>
 							<button class="destroy"></button>
 						</div>
 					</li>
-					{{/item}}
 </script>
 				</ul>
 			</section>
