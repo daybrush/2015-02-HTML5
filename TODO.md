@@ -20,9 +20,11 @@ template 라이브러리를 찾아보고 적용하기
 	- 애니메이션 기능을 추가
 
 ## 추가로 해야 할 일
-- transition, transform 공부하고 적용하기
+- Timer로 만든 애니메이션을 CSS3로 변경(transition, transform, animation)
+- 완료하기랑 삭제하기에 각각 붙였던 이벤트들을  event delegation을 활용해 개선
 - 에니메이션이 끝난 후 삭제할 수 있도록 이벤트 확인하기
 - (옵션) keyframe 공부해보기
+- setInterval, requestAnimationFrame 차이
 
 # 세 번째 [링크](http://portal.nhnnext.org/streaming/2014/2%ED%95%99%EA%B8%B0/HTML5%20Programming%20-%201/%EC%A0%84%EC%9A%A9%EC%9A%B0/324)
 1. 코드 개선하기
