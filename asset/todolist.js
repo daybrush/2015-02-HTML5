@@ -38,6 +38,7 @@ $(document).ready(function () {
   $('#new-todo').on('keypress', function(event) {
     if(event.keyCode === 13) {
       var sContents = $('#new-todo').val();
+      if(!sContents) return;
       TODO.addItem(sContents);
       $('#new-todo').val('');
     }
