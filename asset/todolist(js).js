@@ -20,14 +20,14 @@ function makeTODO(todo) {
 
 function addTODO(e) {
     var ENTER_KEYCODE = 13;
-    if($('#new-todo').val() && e.keyCode === ENTER_KEYCODE) {
-        var todo = makeTODO($('#new-todo').val());
+    if(e.keyCode === ENTER_KEYCODE) {
+        var todo = makeTODO(document.getElementById('new-todo').value);
 
-        $("#todo-list").append(todo);
-        $('#new-todo').val("");
+        document.getElementById("todo-list").appendChild(todo);
+        document.getElementById('new-todo').value = "";
     }
 }
 
-$(function() {
-    $('#new-todo').keydown(addTODO);
+document.addEventListener("DOMContentLoaded", function() {
+    document.getElementById('new-todo').addEventListener("keydown", addTODO);
 });
