@@ -29,13 +29,24 @@ TODO.addItem = function (sContents) {
   }, 10);
 };
 TODO.removeItem = function (cachedLi) {
-  console.log(cachedLi); // 무시하기 잘 됐나 확인.
+  console.log(Date.now(), 'tttt', cachedLi.find('label').text()); // 뭐가 언제 찍히나 보자.
   if (!cachedLi) return;
   cachedLi.addClass('deleting');
-  var removeItem = function () {
+  // setTimeout(function () {cachedLi.addClass('deleting');}, 10);
+  var removeItem = function (event) {
+    // console.log(event.target, event.target.nodeName, event.eventPhase);
+    if (event.eventPhase !== 2) {
+      // li 자신이 아니라 button 등 자식들에 의해 bubbling 받은 거면 무시.
+      console.log('don\'t');
+      return;
+    }
+    // console.log(event);
+    cachedLi.off('webkitTransitionEnd transitionend', removeItem);
+    console.log(Date.now(), 'ssss', cachedLi.find('label').text()); // 뭐가 언제 찍히나 보자.
     cachedLi.remove();
   };
   cachedLi.on('webkitTransitionEnd transitionend', removeItem);
+  // one() 은 각 이벤트에 대해서 다 한번씩 해주니까 on + remove 가 딱.
 }
 
 $(document).ready(function () {
@@ -53,6 +64,7 @@ $(document).ready(function () {
     $(this).closest('li').toggleClass('completed', checked);
   });
   $('#todo-list').on('click', 'li:not(.deleting) button.destroy', function() {
+    // event.stopPropagation();
     TODO.removeItem($(this).closest('li'));
   });
 });
