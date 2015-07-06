@@ -24,7 +24,7 @@ var Todo = {
       if (target.is('input.toggle')){
         target.closest('li').toggleClass('completed');
       } else if (target.is('button.destroy')){
-        target.closest('li').css('-webkit-animation', 'fadeOut 500ms');
+        target.closest('li').css('animation', 'fadeOut 500ms');
         target.closest('li').on('webkitAnimationEnd animationend',function(){
             target.closest('li').remove();
         });
