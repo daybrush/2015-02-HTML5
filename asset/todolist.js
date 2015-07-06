@@ -41,7 +41,8 @@ TODO.removeItem = function (cachedLi) {
 $(document).ready(function () {
   TODO.init();
   $('#new-todo').on('keypress', function(event) {
-    if(event.keyCode === 13) {
+    var ENTER_KEYCODE = 13;
+    if(event.which === ENTER_KEYCODE) {
       var sContents = $('#new-todo').val();
       if(!sContents) return;
       TODO.addItem(sContents);
