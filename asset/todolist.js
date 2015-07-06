@@ -22,11 +22,11 @@ var Todo = {
       var target = $(e.target);
 
       if (target.is('input.toggle')){
-        target.parents('li').toggleClass('completed');
+        target.closest('li').toggleClass('completed');
       } else if (target.is('button.destroy')){
-        target.parents('li').css('-webkit-animation', 'fadeOut 500ms');
-        target.parents('li').on('webkitAnimationEnd animationend',function(){
-            target.parents('li').remove();
+        target.closest('li').css('-webkit-animation', 'fadeOut 500ms');
+        target.closest('li').on('webkitAnimationEnd animationend',function(){
+            target.closest('li').remove();
         });
       }
     });
