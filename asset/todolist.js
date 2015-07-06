@@ -25,7 +25,7 @@ var Todo = {
         target.parents('li').toggleClass('completed');
       } else if (target.is('button.destroy')){
         target.parents('li').css('-webkit-animation', 'fadeOut 500ms');
-        target.parents('li').bind('webkitAnimationEnd',function(){
+        target.parents('li').on('webkitAnimationEnd animationend',function(){
             target.parents('li').remove();
         });
       }
