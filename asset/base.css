@@ -193,8 +193,12 @@ label[for='toggle-all'] {
 	position: relative;
 	font-size: 24px;
 	border-bottom: 1px dotted #ccc;
-	-webkit-transition: opacity 1s;
-	transition: opacity 1s;
+	/*-webkit-transition: opacity 1s;
+	transition: opacity 1s;*/
+	opacity: 1;
+	max-height: 300px;
+	-webkit-transition: max-height 1s, opacity 1s;
+	transition: max-height 1s, opacity 1s;
 }
 
 #todo-list li.appending{
@@ -202,6 +206,9 @@ label[for='toggle-all'] {
 }
 
 #todo-list li.deleting{
+	/*http://stackoverflow.com/questions/3508605/css-transition-height-0-to-height-auto/20226830*/
+	max-height: 0;
+	overflow: hidden;
 	opacity: 0;
 }
 
