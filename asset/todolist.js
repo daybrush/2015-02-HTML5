@@ -1,8 +1,8 @@
 $(document).ready(function(){
-  todos.init();
+  Todo.init();
 });
 
-var todos = {
+var Todo = {
   init : function(){
     this.onKeyEvent();
     this.onClickEvent();
