@@ -1,20 +1,21 @@
 document.addEventListener('DOMContentLoaded', function(){
 
-	var inputTodo = document.getElementById('new-todo');
-	var ulTodoList = document.getElementById('todo-list');
+	var inputTodo = $('#new-todo');
+	var ulTodoList = $('#todo-list');
 
-	var source = document.getElementById('todo-template').innerHTML;
+	var ENTER_KEYCODE = 13;
+
+	var source = $('#todo-template').html();
 	var todoTemplate = Handlebars.compile(source);
 
-	inputTodo.addEventListener('keypress', addTodo);
+	inputTodo.on('keypress', addTodo);
 
 	function addTodo(e) {
-		var ENTER_KEYCODE = 13;
 		if (e.keyCode === ENTER_KEYCODE) {
-			var context = {todo: inputTodo.value};
+			var context = {todo: inputTodo[0].value};
 			var todo = todoTemplate(context);
-			ulTodoList.insertAdjacentHTML('beforeend', todo);
-			inputTodo.value = "";
+			ulTodoList.append(todo);
+			inputTodo[0].value = "";
 		}
 	}
 
