@@ -197,6 +197,7 @@ label[for='toggle-all'] {
 	/*TODO: template으로 transition하는 방법*/
 	opacity: 0;
     animation: fadeIn .8s linear forwards;
+    -webkit-animation: fadeIn .8s linear forwards;
 }
 
 @-moz-keyframes fadeIn {
