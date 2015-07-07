@@ -258,6 +258,10 @@ label[for='toggle-all'] {
 	position: relative;
 }
 
+#todo-list li.sample{
+	display:none;
+}
+
 #todo-list li label {
 	white-space: pre;
 	word-break: break-word;
