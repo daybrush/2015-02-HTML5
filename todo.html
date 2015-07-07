@@ -6,13 +6,13 @@
     </head>
     <body>
                 
-        
-<!--    todo-list를 입력받는 란       -->
+<!--    todo-list를 입력받는 란                   -->
         <input id="new-todo" placeholder="What needs to be done?" autofocus>
                 
 <!--    새로 추가되는 list들은 아래에 추가된다.        -->
         <ul id="todo-list"></ul>
         
+<!--    template 시작                           -->
         <script id="todo-template" type="text/x-handlebars-template">
             <li>
                 {{#newtodo}}
@@ -24,6 +24,7 @@
                 {{/newtodo}}
             </li>
         </script>
+<!--    template 끝                             -->
         
         <script src="handlebars-v3.0.3.js"></script>
         <script src="jquery-1.11.3.js"></script>
