@@ -18,17 +18,20 @@ var Todo = {
   },
 
   onClickEvent : function(){
-    $('#todo-list').on('click', function(e){
+    $('#todo-list').on('click', 'input.toggle', function(e){
+      var target = $(e.target);
+      
+      target.closest('li').toggleClass('completed');
+    });
+
+    $('#todo-list').on('click', 'button.destroy', function(e){
       var target = $(e.target);
 
-      if (target.is('input.toggle')){
-        target.closest('li').toggleClass('completed');
-      } else if (target.is('button.destroy')){
-        target.closest('li').css('animation', 'fadeOut 500ms');
-        target.closest('li').on('webkitAnimationEnd animationend',function(){
-            target.closest('li').remove();
-        });
-      }
+      target.closest('li').css('animation', 'fadeOut 500ms');
+      target.closest('li').on('webkitAnimationEnd animationend',function(){
+          target.closest('li').remove();
+      });
+      
     });
   },
 
