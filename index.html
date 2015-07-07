@@ -5,16 +5,6 @@
 		<link rel="stylesheet" href="asset/base.css">
 		<meta charset="utf-8">
 
-		<script type="text/x-handlebars-template" id = "templ">
-			<li class="completed">
-				<div class="view">
-					<input class="toggle" type="checkbox" checked>
-					<label>{{content}}</label>
-					<button class="destroy"></button>
-				</div>
-			</li>
-		</script>
-
 		<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
 		<script type="text/javascript" src="asset/handlebars.js"></script> 
 		<script type="text/javascript" src="asset/todolist.js"></script>
@@ -30,7 +20,21 @@
 			<section id="main">
 				<input id="toggle-all" type="checkbox">
 				<label for="toggle-all">Mark all as complete</label>
-				<ul id="todo-list"></ul>
+				<ul id="todo-list">
+
+
+					<script type="text/x-handlebars-template" id = "templ">
+						<li class="completed">
+							<div class="view">
+								<input class="toggle" type="checkbox" checked>
+								<label>{{content}}</label>
+								<button class="destroy"></button>
+							</div>
+						</li>
+					</script>
+
+
+				</ul>
 			</section>
 			<footer id="footer">
 				<span id="todo-count"></span>
