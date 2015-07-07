@@ -2,48 +2,22 @@
 //document.addEventListener["DOMContentLoaded", fp];
 
 
-// document.createElement
-// className
-// setAttribute
-// innerText
-// appendChild
-// addEventListener
-// var
-
-
-function makeTODO (target) {
-
-	var eLi = document.createElement("li");
-	var eDiv = document.createElement("div");
-	eDiv.className = "view";
-
-	var eInput = document.createElement("input");
-	eInput.className = "toggle";
-	eInput.setAttribute("type", "checkbox");
-
-	var eLabel = document.createElement("label");
-	eLabel.innerText = target;
-
-	var eButton = document.createElement("button");
-	eButton.className = "destroy";
-
-	eDiv.appendChild(eInput);
-	eDiv.appendChild(eLabel);
-	eDiv.appendChild(eButton);
-	eLi.appendChild(eDiv);
-
+function makeTODO (context) {
+	var source =  $("#entry-template").html();
+	var template = Handlebars.compile(source);
+	var eLi = template(context);
 	return eLi;
-
-
 }
 
 document.addEventListener("DOMContentLoaded", function () {
 	var ENTER_KEYCODE = 13;
 	document.getElementById("new-todo").addEventListener("keydown", function (e) {
 		if (e.keyCode == ENTER_KEYCODE) {
-			var todo = makeTODO(document.getElementById("new-todo").value);
-			document.getElementById("todo-list").appendChild(todo);
-			document.getElementById("new-todo") = "";
+			var oTarget = document.getElementById("new-todo");
+			var oUl = document.getElementById("todo-list");
+			var context = { target: oTarget.value};
+			oUl.insertAdjacentHTML('afterbegin', makeTODO(context));
+			oTarget.value = "";
 		};
 	})
 });
