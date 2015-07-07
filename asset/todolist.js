@@ -1,23 +1,40 @@
 //document.addEventListener["load", fp];
 //document.addEventListener["DOMContentLoaded", fp];
 
-
-function makeTODO (context) {
-	var source =  $("#entry-template").html();
-	var template = Handlebars.compile(source);
-	var eLi = template(context);
-	return eLi;
+// var TODO = {
+// 	get : function (context) {
+// 		this.get = function (context) {
+// 			var html =  $("#entry-template").html();
+// 			var template = Handlebars.compile(html);
+// 			return template(context);
+// 		}
+// 	}
+// }
+var TODO = {
+	target : null,
+	getContext:function () {
+		return {target: this.target.value}
+	},
+    get: function(context) {
+    	var html = $("#entry-template").html();
+    	var template = Handlebars.compile(html);
+    	this.get = template;
+        return template(context);
+    }
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-	var ENTER_KEYCODE = 13;
-	document.getElementById("new-todo").addEventListener("keydown", function (e) {
-		if (e.keyCode == ENTER_KEYCODE) {
-			var oTarget = document.getElementById("new-todo");
-			var oUl = document.getElementById("todo-list");
-			var context = { target: oTarget.value};
-			oUl.insertAdjacentHTML('afterbegin', makeTODO(context));
-			oTarget.value = "";
-		};
-	})
+
+document.addEventListener("DOMContentLoaded", function() {
+    var ENTER_KEYCODE = 13;
+    document.getElementById("new-todo").addEventListener("keydown", function(e) {
+        if (e.keyCode == ENTER_KEYCODE) {
+	    	if(!TODO.target){ 
+	    		TODO.target = document.getElementById("new-todo"); 
+	    	}
+            var oUl = document.getElementById("todo-list");
+            var context = TODO.getContext(context);
+            oUl.insertAdjacentHTML('afterbegin', TODO.get(context));
+            TODO.target.value = "";
+        };
+    })
 });
