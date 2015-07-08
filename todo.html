@@ -14,15 +14,15 @@
         
 <!--    template 시작                           -->
         <script id="todo-template" type="text/x-handlebars-template">
+            {{#newtodo}}
             <li>
-                {{#newtodo}}
                 <div class="view">
                     <input class="toggle" type="checkbox">
                     <label>{{content}}</label>
                     <button class="destroy"></button>
                 </div>
-                {{/newtodo}}
             </li>
+            {{/newtodo}}
         </script>
 <!--    template 끝                             -->
         
