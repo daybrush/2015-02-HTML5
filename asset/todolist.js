@@ -13,10 +13,18 @@ document.addEventListener('DOMContentLoaded', function(){
 	function addTodo(e) {
 		if (e.keyCode === ENTER_KEYCODE) {
 			var context = {todo: inputTodo[0].value};
+			inputTodo[0].value = "";
+
 			var todo = todoTemplate(context);
 			ulTodoList.append(todo);
-			inputTodo[0].value = "";
+			$('#todo-list li:last').on('click', completeTodo);
 		}
+
 	}
 
+	function completeTodo(e) {
+		if (e.target.className === 'toggle') {
+			$(e.target).parents('li').toggleClass('completed');
+		}
+	}
 });
