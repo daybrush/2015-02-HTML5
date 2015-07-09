@@ -11,17 +11,14 @@ function addTODO(e) {
 		document.getElementById("new-todo").value = "";
 
 		var input = document.querySelector(".toggle");
-		console.log(input);
 		input.addEventListener("click", completeTODO);
 
 		var button = document.querySelector(".destroy");
 		button.addEventListener("click", deleteTODO);
 	}
-
 }
 
 function completeTODO(e) {
-	var input = e.currentTarget;
 	var li = e.currentTarget.parentNode.parentNode;
 	if(input.checked) {
 		li.className = "completed";
@@ -32,14 +29,22 @@ function completeTODO(e) {
 }
 
 function deleteTODO(e) {
-	var button = e.currentTarget;
 	var li = e.currentTarget.parentNode.parentNode;
-	var ul = e.currentTarget.parentNode.parentNode.parentNode;
-	ul.removeChild(li);
+	var i = 0;
+	
+	var key = setInterval(function() {
+		console.log(li.style.opacity);
+		if(i === 50) {
+			clearInterval(key);
+			li.parentNode.removeChild(li);
+		}
+		else {
+			li.style.opacity = 1 - i * 0.02;
+		}
+		i++;
+	}, 16);
 }
 
 document.addEventListener("DOMContentLoaded", function() {
 	document.getElementById("new-todo").addEventListener("keydown", addTODO);
 })
-
-
