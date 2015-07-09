@@ -10,9 +10,14 @@ function addTODO(e) {
 		document.getElementById("todo-list").insertAdjacentHTML('beforeend', todo);
 		document.getElementById("new-todo").value = "";
 
-		var target = document.querySelector(".toggle");
-		target.addEventListener("click", completeTODO);
+		var input = document.querySelector(".toggle");
+		console.log(input);
+		input.addEventListener("click", completeTODO);
+
+		var button = document.querySelector(".destroy");
+		button.addEventListener("click", deleteTODO);
 	}
+
 }
 
 function completeTODO(e) {
@@ -24,6 +29,13 @@ function completeTODO(e) {
 	else {
 		li.className = "";
 	}
+}
+
+function deleteTODO(e) {
+	var button = e.currentTarget;
+	var li = e.currentTarget.parentNode.parentNode;
+	var ul = e.currentTarget.parentNode.parentNode.parentNode;
+	ul.removeChild(li);
 }
 
 document.addEventListener("DOMContentLoaded", function() {
