@@ -1,24 +1,30 @@
 var ENTER_KEYCODE = 13;
 
 function addTODO(e) {
-	var source = document.getElementById("todo-template").innerHTML;
-	var template = Handlebars.compile(source);
-
+	
 	if(e.keyCode === ENTER_KEYCODE) {
+		var source = document.getElementById("todo-template").innerHTML;
+		var template = Handlebars.compile(source);
+
 		var context = {title: document.getElementById("new-todo").value};
 		var todo = template(context);
 		document.getElementById("todo-list").insertAdjacentHTML('beforeend', todo);
 		document.getElementById("new-todo").value = "";
 
-		var input = document.querySelector(".toggle");
-		input.addEventListener("click", completeTODO);
+		var input = document.querySelectorAll(".toggle");
+		for(var i = 0 ; i < input.length ; i++){
+			input[i].addEventListener("click", completeTODO);
+		}
 
-		var button = document.querySelector(".destroy");
-		button.addEventListener("click", deleteTODO);
+		var button = document.querySelectorAll(".destroy");
+		for(var i=0; i<button.length; i++){
+			button[i].addEventListener("click", deleteTODO);
+		}
 	}
 }
 
 function completeTODO(e) {
+	var input = e.currentTarget;
 	var li = e.currentTarget.parentNode.parentNode;
 	if(input.checked) {
 		li.className = "completed";
@@ -33,7 +39,6 @@ function deleteTODO(e) {
 	var i = 0;
 	
 	var key = setInterval(function() {
-		console.log(li.style.opacity);
 		if(i === 50) {
 			clearInterval(key);
 			li.parentNode.removeChild(li);
