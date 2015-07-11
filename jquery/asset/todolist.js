@@ -26,7 +26,15 @@ $(function(){
 			return;
 		}
 
-		var li = target.parents("li");
+		// 여기서는 탐색범위가 e.target으로 한정되어 있지만
+		// 탐색범위가 넓을때는 parents()가 여러개의 element를 가져올 것 같아서
+		// parentsUntil() 이라는 함수를 써보았었다
+		// 
+		// parentsUntil("li") 이렇게 하면 처음 나오는 li까지만 탐색할 것이라 기대하고 테스트 해보았으나
+		// 처음으로 li element 부모를 만날때 까지의 경로상에 존재하는 모든 element를 반환해서 실망하고 그냥 parents를 사용했었는데
+		//  
+		// http://git.io/vqNiT 에서 closest를 발견하게 되어 적용하였다
+		var li = target.closest("li");
 		li.toggleClass("completed");
 	}
 
@@ -43,8 +51,7 @@ $(function(){
 		li.on("animationend", function(){
 			// native javascript로 삭제하는 방식이 이 경우에는 더 직관적인것 같다
 			// this.parentNode.removeChild(this);
-
-			target.parents('li').remove();
+			target.closest('li').remove();
 		});
 	}
 
