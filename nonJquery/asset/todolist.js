@@ -33,21 +33,10 @@
 
 		var destroyBtn = target;
 		var li = destroyBtn.parentNode.parentNode;
-
-		li.style.height = parseInt(window.getComputedStyle(destroyBtn).height) + "px";
-		li.style.overflow = "hidden";
-
-		function animate(timestamp) {
-			li.style.height = parseFloat(li.style.height) - 2 + "px";
-
-			if (parseFloat(li.style.height) > 0) {
-    			window.requestAnimationFrame(animate);
-  			} else {
-				li.parentNode.removeChild(li);		
-  			}
-		}
-
-		window.requestAnimationFrame(animate);
+		li.classList.add("deleteAnimate");
+		li.addEventListener("animationend", function(){
+			this.parentNode.removeChild(this);
+		})
 	}
 
 	function makeTodo(sTodoMessage) {
@@ -75,19 +64,6 @@
 			var todoList = document.getElementById("todo-list");
 			todoList.insertAdjacentHTML("beforeend", sTodoEle);
 			e.target.value = "";
-
-			var lastEle = todoList.querySelector("li:nth-last-of-type(1)");
-			lastEle.style.opacity = 0;
-
-			function animate(timestamp) {
-				lastEle.style.opacity = lastEle.style.opacity*1 + 0.1;
-
-				if (lastEle.style.opacity< 1) {
-	    			window.requestAnimationFrame(animate);
-	  			}
-			}
-
-			window.requestAnimationFrame(animate);
 		}
 	}
 

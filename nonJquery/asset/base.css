@@ -195,6 +195,79 @@ label[for='toggle-all'] {
 	border-bottom: 1px dotted #ccc;
 	-webkit-transition: opacity 1s;
 	transition: opacity 1s;
+	-webkit-animation: fadeIn 1s;
+	animation: fadeIn 1s;
+}
+
+@-webkit-keyframes fadeIn {
+    from {
+    	-webkit-transform: rotate(-10deg);
+		transform: rotate(-10deg);
+		opacity:0;
+	}
+	40% {
+		-webkit-transform: rotate(0deg);
+		transform: rotate(0deg);
+    }
+    to {opacity:1;}
+}
+
+@keyframes fadeIn {
+ 	from {
+    	-webkit-transform: rotate(-10deg);
+		transform: rotate(-10deg);
+		opacity:0;
+	}
+	40% {
+		-webkit-transform: rotate(0deg);
+		transform: rotate(0deg);
+    }
+    to {opacity:1;}
+}
+
+#todo-list li.deleteAnimate {
+	position: relative;
+	font-size: 24px;
+	border-bottom: 1px dotted #ccc;
+	-webkit-transition: opacity 1s;
+	transition: opacity 1s;
+	-webkit-animation: deleting 1s;
+	animation: deleting 1s;
+	display:block;
+}
+
+@-webkit-keyframes deleting {
+	from {
+		opacity:1;
+		height:58px;
+	}
+	30% {
+		height:65px;		
+	}
+	60% {
+		opacity:0;
+	}
+	to {
+		height:0px;
+		opacity:0;
+	}
+}
+
+@keyframes deleting {
+	from {
+		opacity:1;
+		height:58px;
+	}
+	30% {
+		height:65px;		
+	}
+	60% {
+		opacity:0;
+	}
+	to {
+		height:0px;
+		opacity:0;
+	}
 }
 
 #todo-list li.appending{
