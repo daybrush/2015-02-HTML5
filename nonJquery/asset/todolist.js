@@ -1,5 +1,5 @@
 (function(){
-	var ENTER_KETCODE = 13;
+	var ENTER_KEYCODE = 13;
 
 	document.addEventListener("DOMContentLoaded", function(){
 		document.getElementById("new-todo").addEventListener("keydown", addTodo);
@@ -19,7 +19,7 @@
 	}
 
 	function addTodo(e) {
-		if(e.keyCode === ENTER_KETCODE) {
+		if(e.keyCode === ENTER_KEYCODE) {
 			var document = window.document;
 
 			try{
