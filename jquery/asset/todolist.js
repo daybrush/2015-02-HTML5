@@ -13,7 +13,40 @@ $(function(){
 
 	var document = window.document;
 
-	$(document).bind("keydown", addTodo);
+	// bind가 on으로 통합되었다고 한다
+	// $(document).bind("keydown", addTodo);
+	$(document).on("keydown", addTodo);
+	$("#todo-list").on("click", completeTodo);
+	$("#todo-list").on("click", removeTodo);
+
+	function completeTodo(e) {
+		var target = $(e.target);
+
+		if(!target.is("input.toggle")) {
+			return;
+		}
+
+		var li = target.parents("li");
+		li.toggleClass("completed");
+	}
+
+	function removeTodo(e) {
+		var target = $(e.target);
+
+		if(!target.is("button.destroy")) {
+			return;
+		}
+
+		var li = target.parents("li");
+		li.addClass("deleteAnimate");
+		
+		li.on("animationend", function(){
+			// native javascript로 삭제하는 방식이 이 경우에는 더 직관적인것 같다
+			// this.parentNode.removeChild(this);
+
+			target.parents('li').remove();
+		});
+	}
 
 	function addTodo(e) {
 		if(e.keyCode === ENTER_KEYCODE) {
