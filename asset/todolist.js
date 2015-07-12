@@ -15,43 +15,45 @@ function addTODO(e) {
 
 		document.getElementById("todo-list").insertAdjacentHTML('beforeend', todo);
 		document.getElementById("new-todo").value = "";
-
-		// var input = document.querySelector(".toggle");
-		// input.addEventListener("click", completeTODO);
-
-		// var button = document.querySelector(".destroy");
-		// button.addEventListener("click", deleteTODO);
 	}
 }
 
 function completeTODO(e) {
-	var input = e.currentTarget;
-	console.log(input);
-	var li = e.currentTarget.parentNode.parentNode;
-	if(input.checked) {
-		li.className = "completed";
+	var input = e.target;
+	if(input.className === "toggle") {	//이 부분 꼭 필요! 
+		var li = e.target.parentNode.parentNode;
+		
+		if(input.checked) {
+			li.className = "completed";
+		}
+		else {
+			li.className = "";
+		}
 	}
-	else {
-		li.className = "";
-	}
+	
 }
 
 function deleteTODO(e) {
-	var li = e.currentTarget.parentNode.parentNode;
-	var i = 0;
-	
-	var key = setInterval(function() {
-		if(i === 50) {
-			clearInterval(key);
-			li.parentNode.removeChild(li);
-		}
-		else {
-			li.style.opacity = 1 - i * 0.02;
-		}
-		i++;
-	}, 16);
+	var button = e.target;
+	if(button.className === "destroy") {	//이 부분 꼭 필요! 
+		var li = e.target.parentNode.parentNode;
+		var i = 0;
+		
+		var key = setInterval(function() {
+			if(i === 50) {
+				clearInterval(key);
+				li.parentNode.removeChild(li);
+			}
+			else {
+				li.style.opacity = 1 - i * 0.02;
+			}
+			i++;
+		}, 16);
+	}
 }
 
 document.addEventListener("DOMContentLoaded", function() {
 	document.getElementById("new-todo").addEventListener("keydown", addTODO);
+	document.getElementById("todo-list").addEventListener("click", completeTODO);
+	document.getElementById("todo-list").addEventListener("click", deleteTODO);
 })
