@@ -193,8 +193,25 @@ label[for='toggle-all'] {
 	position: relative;
 	font-size: 24px;
 	border-bottom: 1px dotted #ccc;
+
+	-webkit-animation-name: addTodo; /* Chrome, Safari, Opera */
+	-webkit-animation-duration: 1s; /* Chrome, Safari, Opera */
+	animation-name: addTodo;
+	animation-duration: 1s;
+
 	-webkit-transition: opacity 1s;
 	transition: opacity 1s;
+}
+
+/* Chrome, Safari, Opera */
+@-webkit-keyframes addTodo {
+	from {opacity: 0;}
+	to {opacity: 1;}
+}
+
+@keyframes addTodo {
+	from {opacity: 0;}
+	to {opacity: 1;}
 }
 
 #todo-list li.appending{

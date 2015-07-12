@@ -6,13 +6,9 @@
 		<meta charset="utf-8">
 		<title>HTML5 Programming - 1 Class _ KwonDaye</title>
 		<link rel="stylesheet" href="asset/base.css">
-
 		<script type="text/javascript" src="http://code.jquery.com/jquery-1.10.2.js"></script>
-
 		<script type="text/javascript" src="./handlebars-v3.0.3.js"></script>
 		<script type="text/javascript" src="asset/todolist.js"></script>
-
-
 	</head>
 	<body>
 		<section id="todoapp">
@@ -23,18 +19,16 @@
 			<section id="main">
 				<input id="toggle-all" type="checkbox"/>
 				<label for="toggle-all">Mark all as complete</label>
-				<ul id="todo-list">
-					
+				<ul id="todo-list">					
 					<script id="todo-template" type="text/x-handlebars-template">
 						<li>
 							<div class="view">
 								<input class="toggle" type="checkbox" {}/>
-								<label>{{title}}</label>
+								<label>{{doWhat}}</label>
 								<button class="destroy"></button>
 							</div>
 						</li>
 					</script>
-
 				</ul>		
 			</section>
 			<footer id="footer">
