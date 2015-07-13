@@ -17,19 +17,19 @@ function addTODO(e) {
 
 		//변수 todo도 li를 의미하지만 html에서 내가 찾고싶은 타켓 영역을 의미하지 않는듯 하다. 
 		//따라서 입력된 타이틀 데이터를 가진 li를 타겟으로 잡아주고, 그 타겟에 애니메이션을 걸었다. 
-		var target = document.getElementById("todo-list").querySelector("li:nth-last-child(1)");
-		target.style.opacity = 0;
+		// var target = document.getElementById("todo-list").querySelector("li:nth-last-child(1)");
+		// target.style.opacity = 0;
 
-		var i = 0;
-		var key = setInterval(function() {
-			if(i === 50) {
-				clearInterval(key);
-			}
-			else {
-				target.style.opacity = i * 0.02;
-			}
-			i++;
-		}, 16);
+		// var i = 0;
+		// var key = setInterval(function() {
+		// 	if(i === 50) {
+		// 		clearInterval(key);
+		// 	}
+		// 	else {
+		// 		target.style.opacity = i * 0.02;
+		// 	}
+		// 	i++;
+		// }, 16);
 	}
 }
 
