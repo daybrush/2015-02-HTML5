@@ -183,6 +183,10 @@ label[for='toggle-all'] {
 	color: #737373;
 }
 
+ul#todo {
+	display: none;	
+}
+
 #todo-list {
 	margin: 0;
 	padding: 0;
@@ -256,6 +260,10 @@ label[for='toggle-all'] {
 	text-shadow: 0 1px 0 #669991;
 	bottom: 1px;
 	position: relative;
+}
+/* extra  */
+#todo-list .added{
+	display: none;
 }
 
 #todo-list li label {
