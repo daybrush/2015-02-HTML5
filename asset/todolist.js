@@ -24,7 +24,9 @@
 	}
 
 	function makeTodoList(todo) {
-		var LIST_TEMPLATE = '<li ><div class="view"><input class="toggle" type="checkbox"><label><%=title%></label><button class="destroy"></button></div></li>';
-		return LIST_TEMPLATE.replace("<%=title%>", todo);
+		var source = document.getElementById("todo-template").innerHTML;
+		var template = Handlebars.compile(source);
+		var context = {todoTitle: todo};
+		return template(context);
 	}
 })();
