@@ -1,36 +1,22 @@
 function makeTODO(todo){
 
-			var li = document.createElement("li");
 
-			var div = document.createElement("div");
-			div.className = "view"
+	var source = $("#templ").html();
+	var template = Handlebars.compile(source);
 
-			var input = document.createElement("input");
-			input.className = "toggle";
-			input.setAttribute("type", "checkbox");
+	var data = { content: todo };
 
-			var label = document.createElement("label");
-			label.innerText = todo;
-
-			var button = document.createElement("button");
-			button.className = "destroy";
-
-			div.appendChild(input);
-			div.appendChild(label);
-			div.appendChild(button);
-
-			li.appendChild(div);
-
-			return li;
+	return template(data);
 
 }
+
 
 
 function addTODO(e){
 	var ENTER_KEYCODE = 13;
 	if(e.keyCode === ENTER_KEYCODE){
 			var todo = makeTODO(document.getElementById("new-todo").value);
-			document.getElementById("todo-list").appendChild(todo);
+			$('#todo-list').append(todo);
 			document.getElementById("new-todo").value = "";
 		}
 }
