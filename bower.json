@@ -1,0 +1,12 @@
+{
+  "name": "2015-02-HTML5",
+  "version": "0.0.0",
+  "homepage": "https://github.com/dragonist/2015-02-HTML5",
+  "authors": [
+    "dragonist <erin314@naver.com>"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "jquery": "~2.1.4"
+  }
+}
