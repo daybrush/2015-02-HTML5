@@ -6,7 +6,8 @@
 	document.addEventListener("DOMContentLoaded", function(){
 		document.getElementById("new-todo").addEventListener("keydown", addTodo);
 		document.getElementById("todo-list").addEventListener("click", completeTodo);
-		document.getElementById("todo-list").addEventListener("click", removeTodo);
+		document.getElementById("todo-list").addEventListener("click", markRemoveTarget);
+		document.getElementById("todo-list").addEventListener("animationend", removeTodoEle);
 	});
 
 	function completeTodo(e) {
@@ -25,7 +26,7 @@
 		}
 	}
 
-	function removeTodo(e) {
+	function markRemoveTarget(e) {
 		var target = e.target;
 		if(target.nodeName !== "BUTTON" || target.className !== "destroy") {
 			return;
@@ -34,9 +35,13 @@
 		var destroyBtn = target;
 		var li = destroyBtn.parentNode.parentNode;
 		li.classList.add("deleteAnimate");
-		li.addEventListener("animationend", function(){
-			this.parentNode.removeChild(this);
-		})
+	}
+
+	function removeTodoEle(e){
+		var ele = e.target;
+		if(ele.classList.contains("deleteAnimate")){
+			ele.parentNode.removeChild(ele);
+		}
 	}
 
 	function makeTodo(sTodoMessage) {
