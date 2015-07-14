@@ -17,14 +17,29 @@ document.addEventListener('DOMContentLoaded', function(){
 
 			var todo = todoTemplate(context);
 			ulTodoList.append(todo);
-			$('#todo-list li:last').on('click', completeTodo);
+			
+			$('#todo-list li:last .toggle').on('click', completeTodo);
+			$('#todo-list li:last .destroy').on('click', removeTodo);
+			addAnimation();
 		}
 
+	}
+
+	function addAnimation() {
+		setTimeout(function(){
+			$('.appending').removeClass('appending');
+		}, 100);
 	}
 
 	function completeTodo(e) {
-		if (e.target.className === 'toggle') {
-			$(e.target).parents('li').toggleClass('completed');
-		}
+		$(e.target).parents('li').toggleClass('completed');
 	}
+
+	function removeTodo(e) {
+		$(e.target).parents('li').addClass('deleting');
+		setTimeout(function(){
+			$(e.target).parents('li').remove();
+		}, 1000);
+	}
+
 });
