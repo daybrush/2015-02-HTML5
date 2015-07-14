@@ -36,7 +36,11 @@ TODO.removeItem = function (cachedLi) {
     cachedLi.remove();
   };
   cachedLi.on('webkitTransitionEnd transitionend', removeItem);
-}
+};
+TODO.completeItem = function ($item) {
+  var checked = $item.is(':checked');
+  $item.closest('li').toggleClass('completed', checked);
+};
 
 $(document).ready(function () {
   TODO.init();
@@ -50,8 +54,7 @@ $(document).ready(function () {
     }
   });
   $('#todo-list').on('click', 'input.toggle', function() {
-    var checked = $(this).is(':checked');
-    $(this).closest('li').toggleClass('completed', checked);
+    TODO.completeItem($(this));
   });
   $('#todo-list').on('click', 'li:not(.deleting) button.destroy', function() {
     TODO.removeItem($(this).closest('li'));
