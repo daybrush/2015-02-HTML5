@@ -10,28 +10,39 @@ TODOsync = {
     $.ajax({
       url: "http://128.199.76.9:8002/helloheesu",
       method: "PUT",
-      data: "todo="+sContents,
+      data: "todo="+sContents
     }).done(function (e) {
       TODO.addItem(sContents);
     });
   },
-  complete : function ($item) {
+  complete : function ($item, $event) {
     var itemId = $item.closest('li').data('id');
     var checked = ($item.is(':checked')) ? 1 : 0;
+
     $.ajax({
       url: "http://128.199.76.9:8002/helloheesu/"+itemId,
       method: "POST",
       data: "completed="+checked
     }).done(function (data) {
+      $item.prop("checked", checked);
+      // attr 이 아니라 prop. // http://okky.kr/article/230491
+      // 대부분의 인터넷 jQuery checkbox 예제는 .attr()를 쓰고 있다ㅜㅜ
       TODO.completeItem($item);
+    }).fail(function (data) {
+      // console.log(data); // "the jQuery.get method returns a jqXHR object,"
+      $item.prop("checked", !checked);
+      var status = (checked)? "completed": "incomplete";
+      alert("fail to mark item as "+status);
     });
-    // TODO : fail 하면 checkbox 해제 하는 코드 추가.
+
+    $event.preventDefault();
+    // http://stackoverflow.com/questions/6061126/is-there-any-way-to-prevent-default-event-and-then-fire-it-again-with-jquery
   },
   remove : function ($item) {
     var itemId = $item.closest('li').data('id');
     $.ajax({
       url: "http://128.199.76.9:8002/helloheesu/"+itemId,
-      method: "DELETE",
+      method: "DELETE"
     }).done(function (data) {
       TODO.removeItem($item.closest('li'));
     });
@@ -61,7 +72,6 @@ TODO.addItem = function (data) {
 };
 TODO.addItems = function (datas) {
   // TODO : 일단은 addItem 반복, 나중에 handlebar 로 개선.
-  console.log(datas);
   for (var i = 0; i < datas.length; i++) {
     TODO.addItem(datas[i]);
   };
@@ -97,8 +107,8 @@ $(document).ready(function () {
       $('#new-todo').val('');
     }
   });
-  $('#todo-list').on('click', 'input.toggle', function() {
-    TODOsync.complete($(this));
+  $('#todo-list').on('click', 'input.toggle', function(e) {
+    TODOsync.complete($(this), e);
   });
   $('#todo-list').on('click', 'li:not(.deleting) button.destroy', function() {
     TODOsync.remove($(this));
