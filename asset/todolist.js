@@ -3,6 +3,35 @@
 * transition 이 opacity 와 max-height가 동시가 아니라 순서대로 실행되는 거 같은데.
 * 아무것도없을때 입력칸 혹은 맨마지막 아이템, 위에 희미하게 회색선. 뭐지?
 */
+TODOsync = {
+  get : function () {
+    
+  },
+  add : function (sContents) {
+    // var xhr = new XMLHttpRequest();
+    // xhr.open("PUT", "http://128.199.76.9:8002/helloheesu", true);
+    // xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
+    // xhr.addEventListener("load", function (e) {
+    //   TODO.addItem(sContents);
+    // });
+    // xhr.send("todo="+sContents);
+    $.ajax({
+      url: "http://128.199.76.9:8002/helloheesu",
+      method: "PUT",
+      // contentType: "application/x-www-form-urlencoded; charset=UTF-8", // default
+      data: "todo="+sContents,
+    }).done(function (e) {
+      TODO.addItem(sContents);
+    });
+  },
+  complete : function () {
+
+  },
+  remove : function () {
+    
+  }
+};
+
 TODO = {
   item : null,
   board : null,
@@ -49,7 +78,7 @@ $(document).ready(function () {
     if(event.which === ENTER_KEYCODE) {
       var sContents = $('#new-todo').val();
       if(!sContents) return;
-      TODO.addItem(sContents);
+      TODOsync.add(sContents);
       $('#new-todo').val('');
     }
   });
