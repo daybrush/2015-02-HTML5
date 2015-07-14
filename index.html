@@ -19,7 +19,7 @@
 				<label for="toggle-all">Mark all as complete</label>
 				<ul id="todo-list">
 <script id="new-item-script" type="text/x-handlebars-template">
-					<li>
+					<li data-id="{{id}}" class="{{#if completed}}completed{{/if}}">
 						<div class="view">
 							<input class="toggle" type="checkbox" {{#if completed}}checked{{/if}}>
 							<label>{{todo}}</label>

@@ -20,11 +20,26 @@ TODOsync = {
       TODO.addItem(sContents);
     });
   },
-  complete : function () {
-
+  complete : function ($item) {
+    var itemId = $item.closest('li').data('id');
+    var checked = ($item.is(':checked')) ? 1 : 0;
+    $.ajax({
+      url: "http://128.199.76.9:8002/helloheesu/"+itemId,
+      method: "POST",
+      data: "completed="+checked
+    }).done(function (data) {
+      TODO.completeItem($item);
+    });
+    // TODO : fail 하면 checkbox 해제 하는 코드 추가.
   },
-  remove : function () {
-
+  remove : function ($item) {
+    var itemId = $item.closest('li').data('id');
+    $.ajax({
+      url: "http://128.199.76.9:8002/helloheesu/"+itemId,
+      method: "DELETE",
+    }).done(function (data) {
+      TODO.removeItem($item.closest('li'));
+    });
   }
 };
 
@@ -50,7 +65,7 @@ TODO.addItem = function (data) {
   }, 10);
 };
 TODO.addItems = function (datas) {
-  // 일단은 addItem 반복, 나중에 handlebar 로 개선.
+  // TODO : 일단은 addItem 반복, 나중에 handlebar 로 개선.
   console.log(datas);
   for (var i = 0; i < datas.length; i++) {
     TODO.addItem(datas[i]);
@@ -88,9 +103,9 @@ $(document).ready(function () {
     }
   });
   $('#todo-list').on('click', 'input.toggle', function() {
-    TODO.completeItem($(this));
+    TODOsync.complete($(this));
   });
   $('#todo-list').on('click', 'li:not(.deleting) button.destroy', function() {
-    TODO.removeItem($(this).closest('li'));
+    TODOsync.remove($(this));
   });
 });
