@@ -11,8 +11,8 @@ TODOsync = {
       url: "http://128.199.76.9:8002/helloheesu",
       method: "PUT",
       data: "todo="+sContents
-    }).done(function (e) {
-      TODO.addItem(sContents);
+    }).done(function (data) {
+      TODO.addItem({todo:sContents, id:data.insertId});
     });
   },
   complete : function ($item, $event) {
@@ -23,7 +23,7 @@ TODOsync = {
       url: "http://128.199.76.9:8002/helloheesu/"+itemId,
       method: "POST",
       data: "completed="+checked
-    }).done(function (data) {
+    }).done(function () {
       $item.prop("checked", checked);
       TODO.completeItem($item);
     }).fail(function () {
@@ -39,7 +39,7 @@ TODOsync = {
     $.ajax({
       url: "http://128.199.76.9:8002/helloheesu/"+itemId,
       method: "DELETE"
-    }).done(function (data) {
+    }).done(function () {
       TODO.removeItem($item.closest('li'));
     });
   }
