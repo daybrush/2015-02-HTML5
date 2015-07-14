@@ -5,20 +5,16 @@
 */
 TODOsync = {
   get : function () {
-    
+    $.ajax({
+      url: "http://128.199.76.9:8002/helloheesu"
+    }).done(function (data) {
+      TODO.addItems(data);
+    });
   },
   add : function (sContents) {
-    // var xhr = new XMLHttpRequest();
-    // xhr.open("PUT", "http://128.199.76.9:8002/helloheesu", true);
-    // xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
-    // xhr.addEventListener("load", function (e) {
-    //   TODO.addItem(sContents);
-    // });
-    // xhr.send("todo="+sContents);
     $.ajax({
       url: "http://128.199.76.9:8002/helloheesu",
       method: "PUT",
-      // contentType: "application/x-www-form-urlencoded; charset=UTF-8", // default
       data: "todo="+sContents,
     }).done(function (e) {
       TODO.addItem(sContents);
@@ -28,7 +24,7 @@ TODOsync = {
 
   },
   remove : function () {
-    
+
   }
 };
 
@@ -42,8 +38,9 @@ TODO.init = function () {
   TODO.board = $('#todo-list');
   TODO.template = Handlebars.compile(TODO.item.html());
 };
-TODO.addItem = function (sContents) {
-  var data = {title:sContents};
+TODO.addItem = function (data) {
+  if (typeof(data) === "string") data = {todo:data};
+  else if(typeof(data) !== "object") return;
   TODO.board.append(TODO.template(data));
   var lastLi = $('li:last-child');
   lastLi.addClass('appending');
@@ -52,6 +49,13 @@ TODO.addItem = function (sContents) {
     lastLi.removeClass('appending');
   }, 10);
 };
+TODO.addItems = function (datas) {
+  // 일단은 addItem 반복, 나중에 handlebar 로 개선.
+  console.log(datas);
+  for (var i = 0; i < datas.length; i++) {
+    TODO.addItem(datas[i]);
+  };
+}
 TODO.removeItem = function (cachedLi) {
   if (!cachedLi) return;
   cachedLi.addClass('deleting');
@@ -73,6 +77,7 @@ TODO.completeItem = function ($item) {
 
 $(document).ready(function () {
   TODO.init();
+  TODOsync.get();
   $('#new-todo').on('keypress', function(event) {
     var ENTER_KEYCODE = 13;
     if(event.which === ENTER_KEYCODE) {
