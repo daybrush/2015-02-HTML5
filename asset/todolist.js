@@ -60,13 +60,9 @@ TODO.addItem = function (data) {
   else if(typeof(data) !== "object") return;
   TODO.board.append(TODO.template(data));
   var lastLi = $('li:last-child');
-  lastLi.addClass('appending');
+  lastLi.css('opacity', 0);
   lastLi.css('opacity');
-  // ????? setTimeout 안 하면 왜 transition 이 안 먹히지
-  // 보이는 껍데기는 바뀌었어도, 브라우저가 다루고 있는 DOM 의 데이터는 바뀌지 않았을 수 있다.
-  // opacity 든 offsetHeight 든 뭐든, 계산하게 만들어서 update 를 시켜야 한다.
-  // setTimeout 으로 해결하는 hack의 경우 브라우저마다 필요한 시간(10)도 달라서 불안정.
-  lastLi.removeClass('appending');
+  lastLi.css('opacity', 1);
 };
 TODO.addItems = function (datas) {
   // TODO : 일단은 addItem 반복, 나중에 handlebar 로 개선.
@@ -76,7 +72,11 @@ TODO.addItems = function (datas) {
 }
 TODO.removeItem = function (cachedLi) {
   if (!cachedLi) return;
-  cachedLi.addClass('deleting');
+  cachedLi.css({
+    'opacity': 0,
+    'maxHeight': 0,
+    'overflow': 'hidden'
+  });
   var removeItem = function (event) {
     if (event.eventPhase !== 2) {
       // li 자신이 아니라 button 등 자식들에 의해 bubbling 받은 거면 무시.
