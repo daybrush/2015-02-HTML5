@@ -25,18 +25,14 @@ TODOsync = {
       data: "completed="+checked
     }).done(function (data) {
       $item.prop("checked", checked);
-      // attr 이 아니라 prop. // http://okky.kr/article/230491
-      // 대부분의 인터넷 jQuery checkbox 예제는 .attr()를 쓰고 있다ㅜㅜ
       TODO.completeItem($item);
-    }).fail(function (data) {
-      // console.log(data); // "the jQuery.get method returns a jqXHR object,"
+    }).fail(function () {
       $item.prop("checked", !checked);
       var status = (checked)? "completed": "incomplete";
       alert("fail to mark item as "+status);
     });
 
     $event.preventDefault();
-    // http://stackoverflow.com/questions/6061126/is-there-any-way-to-prevent-default-event-and-then-fire-it-again-with-jquery
   },
   remove : function ($item) {
     var itemId = $item.closest('li').data('id');
@@ -65,10 +61,12 @@ TODO.addItem = function (data) {
   TODO.board.append(TODO.template(data));
   var lastLi = $('li:last-child');
   lastLi.addClass('appending');
+  lastLi.css('opacity');
   // ????? setTimeout 안 하면 왜 transition 이 안 먹히지
-  setTimeout(function () {
-    lastLi.removeClass('appending');
-  }, 10);
+  // 보이는 껍데기는 바뀌었어도, 브라우저가 다루고 있는 DOM 의 데이터는 바뀌지 않았을 수 있다.
+  // opacity 든 offsetHeight 든 뭐든, 계산하게 만들어서 update 를 시켜야 한다.
+  // setTimeout 으로 해결하는 hack의 경우 브라우저마다 필요한 시간(10)도 달라서 불안정.
+  lastLi.removeClass('appending');
 };
 TODO.addItems = function (datas) {
   // TODO : 일단은 addItem 반복, 나중에 handlebar 로 개선.
