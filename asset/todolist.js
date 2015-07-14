@@ -66,7 +66,17 @@ TODO.addItem = function (data) {
 };
 TODO.addItems = function (datas) {
   // TODO : 일단은 addItem 반복, 나중에 handlebar 로 개선.
+  datas.sort(function (a, b) {
+    if(a.id < b.id)
+      return -1;
+    else if(a.id > b.id)
+      return 1;
+    else
+      return 0;
+  });
   for (var i = 0; i < datas.length; i++) {
+    // console.log(datas[i].date);
+    // .date 는 중복이 너무 많고ㅜㅜ .id 가 믿을만함.
     TODO.addItem(datas[i]);
   };
 }
