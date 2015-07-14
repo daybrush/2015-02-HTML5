@@ -11,8 +11,11 @@ function makeTODO(enteredTitle) {
 
 function addTODO(e) {
 	if(e.keyCode === ENTER_KEYCODE) {
+		var li = document.createElement("li");
+		document.getElementById("todo-list").appendChild(li);
+
 		var todo = makeTODO(e.target.value);
-		document.getElementById("todo-list").insertAdjacentHTML('beforeend', todo);
+		li.insertAdjacentHTML('beforeend', todo);
 		document.getElementById("new-todo").value = "";
 
 		//변수 todo도 li를 의미하지만 html에서 내가 찾고싶은 타켓 영역을 의미하지 않는듯 하다. 
