@@ -1,8 +1,3 @@
-/* todo
-* new TODO() 는 굳이 ㄴㄴ. 어차피 딱 하나인데. 차라리 new Item().
-* transition 이 opacity 와 max-height가 동시가 아니라 순서대로 실행되는 거 같은데.
-* 아무것도없을때 입력칸 혹은 맨마지막 아이템, 위에 희미하게 회색선. 뭐지?
-*/
 TODOsync = {
   get : function () {
     $.ajax({

@@ -78,3 +78,22 @@ template 라이브러리를 찾아보고 적용하기
 ## 추가로 해야 할 일
 - pushState, popState
 - (옵션) Service Worker 공부해서 적용하기
+
+
+
+
+
+
+
+
+# 추가
+* 알게 된 내용 정리
+* object 정리? (new Item())
+* 아무것도없을때 입력칸 혹은 맨마지막 아이템, 위에 희미하게 회색선. 뭐지?
+* transition 이 opacity 와 max-height가 동시가 아니라 순서대로 실행되는 거 같은데.
+* jquery ajax done success difference
+* css 컴포지터 스레드
+  * Compositor Thread Architecture
+  * css animation main thread / compositor thrmead
+* css vendor prefix
+* on('webkitTransitionEnd transitionend') : 이벤트 두개에 각각.
