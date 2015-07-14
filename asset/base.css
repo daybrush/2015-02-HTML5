@@ -193,13 +193,14 @@ label[for='toggle-all'] {
 	position: relative;
 	font-size: 24px;
 	border-bottom: 1px dotted #ccc;
-	/*-webkit-transition: opacity 1s;
-	transition: opacity 1s;*/
-  	-webkit-animation: fadeIn 2s;
-  	animation: fadeIn 2s;
+	-webkit-transition: opacity 1s;
+	transition: opacity 1s;
+	/*opacity: 0;*/
+  	/*-webkit-animation: fadeIn 2s;
+  	animation: fadeIn 2s;*/
 }
 
-@-webkit-keyframes fadeIn {
+/*@-webkit-keyframes fadeIn {
   from {
   	opacity: 0;
   }
@@ -207,7 +208,7 @@ label[for='toggle-all'] {
   to {
     opacity: 1;
   }
-}
+}*/
 
 #todo-list li.appending{
 	opacity: 0;
