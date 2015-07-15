@@ -1,5 +1,3 @@
-const TODO_URL = "http://128.199.76.9:8002/JB1021/";
-
 jQuery.each( [ "put", "delete" ], function( i, method ) {
   jQuery[ method ] = function( url, data, callback, type ) {
     if ( jQuery.isFunction( data ) ) {
@@ -20,17 +18,18 @@ jQuery.each( [ "put", "delete" ], function( i, method ) {
 
 var TODO = {
 	ENTER_KEYCODE : 13,
+	TODO_URL : "http://128.199.76.9:8002/JB1021/",
 	init : function(){
 		$(document).on("DOMContentLoaded", function(){
 			$("#new-todo").on("keydown", this.add.bind(this)); 
 			$("#todo-list").on("click", this.completed);
-			$("#todo-list").on("click", this.remove);
+			$("#todo-list").on("click", this.remove.bind(this));
 		}.bind(this));
-		$.get(TODO_URL, function(result){
+		$.get(this.TODO_URL, function(result){
 			for(var i in result){
-				var todoLi = this.build(result[i].todo, result[i].id);
-				$(todoLi[0]).css('opacity', '1');
-				$("#todo-list").prepend(todoLi[0]);
+				var li = this.build(result[i].todo, result[i].id);
+				$(li[0]).css("opacity", "1");
+				$("#todo-list").append(li[0]);
 			}
 		}.bind(this));
 	},
@@ -42,12 +41,12 @@ var TODO = {
 	add : function(e){
 		if(e.keyCode === this.ENTER_KEYCODE) {
 			var todo = $("#new-todo").val();
-			$.put(TODO_URL, todo, function(result){
-				var todoLi = this.build(todo, result.insertId);
-				$("#todo-list").prepend(todoLi[0]);
+			$.put(this.TODO_URL, {todo : todo}, function(result){
+				var li = this.build(todo, result.insertId);
+				$("#todo-list").prepend(li[0]);
 				$("#new-todo").val("");
-				setTimeout(function() {
-					todoLi.addClass("appending");
+				setTimeout(function(){
+					li.css("opacity", "1");
   				}, 10);			
 			}.bind(this));
   		}
@@ -56,20 +55,20 @@ var TODO = {
 		var input = $(e.target);
 		var li = input.parents("li");
 		var completed = input.is(":checked")?"1":"0";
-		$.post(TODO_URL+li.data("key"),completed, function(result){
+		$.post(this.TODO_URL+li.data("key"),completed, function(result){
 			li.toggleClass("completed", input.is(":checked"));
 		});
 	}, 
 	remove : function(e){
 		var destroy = $(e.target);
+		if(destroy.attr("class") !== "destroy") return;
 		var li = destroy.parents("li");
-		if(e.target.className !== "destroy") return;
-		$.delete(TODO_URL+li.data("key"), function(){
-  			li.addClass("deleting");
-			li.on("transitionend" , function () {
-  				li.remove();
-			});
-		})
+		$.delete(this.TODO_URL+li.data("key"), function(){
+  			li.css("opacity", "0");
+			li.on("transitionend", function(){
+				li.remove();
+			})
+		}.bind(this));
 	}
 }
 
