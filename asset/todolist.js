@@ -1,77 +1,81 @@
-var TODOSync = {
-	get : function(){
+const TODO_URL = "http://128.199.76.9:8002/JB1021/";
 
-	}, 
-	add : function(){
-		var xhr = new XMLHttpRequest();
-		xhr.open("PUT", "http://ui.nhnnext.org:3333/JB1021",true);
-		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
-		xhr.addEventListener("load", function(e){
-			callback(xhr.responseText);
-		});
-		xhr.send();
-	}, 
-	completed : function(){
+jQuery.each( [ "put", "delete" ], function( i, method ) {
+  jQuery[ method ] = function( url, data, callback, type ) {
+    if ( jQuery.isFunction( data ) ) {
+      type = type || callback;
+      callback = data;
+      data = undefined;
+    }
 
-	}, 
-	remove : function(){
-
-	}
-}
+    return jQuery.ajax({
+      url: url,
+      type: method,
+      dataType: type,
+      data: data,
+      success: callback
+    });
+  };
+});
 
 var TODO = {
 	ENTER_KEYCODE : 13,
 	init : function(){
-		document.addEventListener("DOMContentLoaded", function(){
-			document.querySelector("#new-todo").addEventListener("keydown", this.add.bind(this)); 
-			document.querySelector("#todo-list").addEventListener("click", this.completed);
-			document.querySelector("#todo-list").addEventListener("click", this.remove);
+		$(document).on("DOMContentLoaded", function(){
+			$("#new-todo").on("keydown", this.add.bind(this)); 
+			$("#todo-list").on("click", this.completed);
+			$("#todo-list").on("click", this.remove);
+		}.bind(this));
+		$.get(TODO_URL, function(result){
+			for(var i in result){
+				var todoLi = this.build(result[i].todo, result[i].id);
+				$(todoLi[0]).css('opacity', '1');
+				$("#todo-list").prepend(todoLi[0]);
+			}
 		}.bind(this));
 	},
-	build : function(todo){
-		var todoObj = { title : todo }
+	build : function(todo, key){
+		var todoObj = { title : todo , insertId : key}
 		var template = Handlebars.compile(Templates.todoTemplate);
-		console.log(template(todoObj));
-		return template(todoObj);
+		return $(template(todoObj));
 	},
 	add : function(e){
 		if(e.keyCode === this.ENTER_KEYCODE) {
-			var todo = document.querySelector("#new-todo").value;
-			// TODOSync.add(todo, function(json){
-				var todoLi = this.build(todo);
-				document.querySelector("#todo-list").insertAdjacentHTML('beforeend', todoLi);
-				document.querySelector("#new-todo").value = "";
+			var todo = $("#new-todo").val();
+			$.put(TODO_URL, todo, function(result){
+				var todoLi = this.build(todo, result.insertId);
+				$("#todo-list").prepend(todoLi[0]);
+				$("#new-todo").val("");
 				setTimeout(function() {
-    				document.querySelector("#todo-list").firstChild.classList.add("appending");
-  				}, 10);
-			// }.bind(this));
+					todoLi.addClass("appending");
+  				}, 10);			
+			}.bind(this));
   		}
 	},
 	completed : function(e){
-		var input = e.target;
-		var li = e.target.parentNode.parentNode;
-		if(e.target.className !== "toggle") return;
-		if(input.checked){
-			li.className = "completed";
-		}else{
-			li.className = "";
-		}
-
+		var input = $(e.target);
+		var li = input.parents("li");
+		var completed = input.is(":checked")?"1":"0";
+		$.post(TODO_URL+li.data("key"),completed, function(result){
+			li.toggleClass("completed", input.is(":checked"));
+		});
 	}, 
 	remove : function(e){
-		var destroy = e.target;
-		var li = e.target.parentNode.parentNode;
+		var destroy = $(e.target);
+		var li = destroy.parents("li");
 		if(e.target.className !== "destroy") return;
-  		li.classList.add("deleting");
-		setTimeout(function() {
-  			li.parentNode.removeChild(li);
-  		}, 1000);
+		$.delete(TODO_URL+li.data("key"), function(){
+  			li.addClass("deleting");
+			li.on("transitionend" , function () {
+  				li.remove();
+			});
+		})
 	}
 }
 
 Templates = {}; 
 Templates.todoTemplate = [
-	'<li>',
+	'<li data-key={{insertId}} >',
 		'<div class="view">',
 			'<input class="toggle" type="checkbox">',
 			'<label>{{title}}</label>',
