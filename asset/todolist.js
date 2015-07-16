@@ -43,7 +43,7 @@ var TODO = {
 			var todo = $("#new-todo").val();
 			$.put(this.TODO_URL, {todo : todo}, function(result){
 				var li = this.build(todo, result.insertId);
-				$("#todo-list").prepend(li[0]);
+				$("#todo-list").prepend(li);
 				$("#new-todo").val("");
 				setTimeout(function(){
 					li.css("opacity", "1");
@@ -80,7 +80,7 @@ Templates.todoTemplate = [
 			'<label>{{title}}</label>',
 			'<button class="destroy"></button>',
 		'</div>',
-	'<li>'
+	'</li>'
 ].join("\n");
 
 TODO.init();
