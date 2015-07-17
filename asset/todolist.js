@@ -1,5 +1,5 @@
 /*todo
-* innerHTML + = todo 로 처리했던 부분 insertAdjacentHTML 로 바꾸기
+* innerHTML + = todo 로 처리했던 부분 insertAdjacentHTML 로 바꾸기 // Done
 * 등록한 할 일을 완료 처리하기
 *  - 이벤트 할당하기
 *  - class추가하기(li에 completed)
@@ -11,14 +11,9 @@
 
 */
 
-(function () {
-	document.addEventListener("DOMContentLoaded", function () {
-		var newtodo = document.getElementById("new-todo");
-		newtodo.addEventListener("keydown", addTodo);
-	})
-
-	//var input = document.querySelector(".toggle");
-	//input[0].addEventListener("click", completeTodo);
+$(document).ready(function () {
+	$("#new-todo").on("keydown", addTodo);
+	$("#todo-list").on("click", "input", completeTodo);
 
 	function addTodo(ev) {
 		var ENTER_KEYCODE = 13;
@@ -40,11 +35,15 @@
 	function completeTodo(ev) {
 		var input = ev.currentTarget;
 		var li = input.parentNode.parentNode;
-
 		if(input.checked === true) {
 			li.className = "completed";
 		}else {
 			li.className = "";
 		}
 	}
+});
+
+(function () {
+	//이벤트 등록
+	
 })();
