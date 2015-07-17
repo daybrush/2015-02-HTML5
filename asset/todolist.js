@@ -18,10 +18,10 @@ jQuery.each( [ "put", "delete" ], function( i, method ) {
 
 var TODO = {
 	ENTER_KEYCODE : 13,
+	selectedTarget : null,
 	TODO_URL : "http://128.199.76.9:8002/JB1021/",
 	init : function(){
-		$(window).on("online", this.onoffLineListener);
-		$(window).on("offline", this.onoffLineListener);
+		$(window).on("online offline", this.onoffLineListener);
 		$(window).on("popstate", this.changeURLFilter.bind(this));
 		$(document).on("DOMContentLoaded", function(){
 			$("#new-todo").on("keydown", this.add.bind(this)); 
@@ -37,16 +37,18 @@ var TODO = {
 			}
 		}.bind(this));
 		this.selectedTarget = $("#filters .selected");
+		history.pushState({"href":"index.html"}, null, "index.html");
 	},
 	changeURLFilter : function(e){
-		var method = e.originalEvent.state.method;
-		if(method === "active"){
+		var href = e.originalEvent.state.href;
+		if(href === "active"){
 			this.activeView();
-		} else if(method === "completed"){
+		} else if(href === "completed"){
 			this.completeView();
 		} else {
 			this.allView();
 		}
+		this.changeSelectedClass(href);
 	},
 	onoffLineListener : function(){
 		$(header).toggleClass("offline", navigator.offLine);
@@ -59,16 +61,16 @@ var TODO = {
 		
 		var href = target.attr("href");
 		if(href === "active"){
-			history.pushState({"method":"active"}, null, "active");
+			history.pushState({"href":"active"}, null, "active");
 			this.activeView();
 		} else if(href === "completed"){
-			history.pushState({"method":"completed"}, null, "completed");
+			history.pushState({"href":"completed"}, null, "completed");
 			this.completeView();
 		} else {
-			history.pushState({"method":"all"}, null, "index.html");
+			history.pushState({"href":"index.html"}, null, "index.html");
 			this.allView();
 		}
-		this.changeSelectedClass(target);
+		this.changeSelectedClass(href);
 	},
 	build : function(todo, key){
 		var todoObj = { title : todo , insertId : key}
@@ -104,7 +106,7 @@ var TODO = {
   			li.css("opacity", "0");
 			li.on("transitionend", function(){
 				li.remove();
-			})
+			});
 		}.bind(this));
 	},
 	allView : function(){
@@ -116,7 +118,8 @@ var TODO = {
 	completeView : function(){
 		$("#todo-list").removeClass("all-active").addClass("all-completed");
 	},
-	changeSelectedClass : function(target){
+	changeSelectedClass : function(href){
+		var target = $("#filters a[href='"+href+"']");
 		target.addClass("selected");	
 		this.selectedTarget.removeClass("selected");
 		this.selectedTarget = target;
