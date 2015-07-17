@@ -1,48 +1,48 @@
-document.addEventListener('DOMContentLoaded', function(){
+var TODO = {
+	ENTER_KEYCODE : 13,
 
-	var inputTodo = $('#new-todo');
-	var ulTodoList = $('#todo-list');
+	init : function() {
+		document.addEventListener('DOMContentLoaded', function(){
 
-	var ENTER_KEYCODE = 13;
+			this.inputTodo = $('#new-todo');
+			this.ulTodoList = $('#todo-list');
 
-	var source = $('#todo-template').html();
-	var todoTemplate = Handlebars.compile(source);
+			var source = $('#todo-template').html();
+			this.todoTemplate = Handlebars.compile(source);
 
-	inputTodo.on('keypress', addTodo);
+			this.inputTodo.on('keypress', this.add.bind(this));
+			this.ulTodoList.on('transitionend', 'li.deleting', function(e){
+				e.target.remove();
+			});
+		}.bind(this));
+	},
 
-	$('#todo-list').on('transitionend', 'li.deleting', function(e){
-		e.target.remove();
-	});
+	add : function(e) {
+		if (e.keyCode === this.ENTER_KEYCODE) {
+			var context = {todo: this.inputTodo[0].value};
+			this.inputTodo[0].value = "";
 
-	function addTodo(e) {
-		if (e.keyCode === ENTER_KEYCODE) {
-			var context = {todo: inputTodo[0].value};
-			inputTodo[0].value = "";
-
-			var todo = $(todoTemplate(context));
-			ulTodoList.append(todo);
+			this.todo = $(this.todoTemplate(context));
+			this.ulTodoList.append(this.todo);
 			
-			appendingAnimate();
+			this.appendingAnimate.bind(this)();
 			
-			$('#todo-list li:last').on('click', '.toggle', completeTodo);
-			$('#todo-list li:last').on('click', '.destroy', removeTodo);
+			$('#todo-list li:last').on('click', '.toggle', this.complete);
+			$('#todo-list li:last').on('click', '.destroy', this.remove);
 		}
+	},
+	remove : function(e) {
+		$(e.delegateTarget).addClass('deleting');
+	},
 
-	}
+	complete : function(e) {
+		$(e.delegateTarget).toggleClass('completed');
+	},
 
-	function appendingAnimate() {
+	appendingAnimate : function() {
 		// css update...why...
-		todo.css('opacity');
+		this.todo.css('opacity');
 		$('.appending').removeClass('appending');
 	}
-
-	function completeTodo(e) {
-		$(e.delegateTarget).toggleClass('completed');
-	}
-
-	function removeTodo(e) {
-		$(e.delegateTarget).addClass('deleting');
-	}
-
-
-});
+}
+TODO.init();
