@@ -20,10 +20,14 @@ var TODO = {
 	ENTER_KEYCODE : 13,
 	TODO_URL : "http://128.199.76.9:8002/JB1021/",
 	init : function(){
+		$(window).on("online", this.onoffLineListener);
+		$(window).on("offline", this.onoffLineListener);
+		$(window).on("popstate", this.changeURLFilter.bind(this));
 		$(document).on("DOMContentLoaded", function(){
 			$("#new-todo").on("keydown", this.add.bind(this)); 
 			$("#todo-list").on("click", this.completed);
 			$("#todo-list").on("click", this.remove.bind(this));
+			$("#filters").on("click", this.changeStateFilter.bind(this));
 		}.bind(this));
 		$.get(this.TODO_URL, function(result){
 			for(var i in result){
@@ -32,6 +36,39 @@ var TODO = {
 				$("#todo-list").append(li[0]);
 			}
 		}.bind(this));
+		this.selectedTarget = $("#filters .selected");
+	},
+	changeURLFilter : function(e){
+		var method = e.originalEvent.state.method;
+		if(method === "active"){
+			this.activeView();
+		} else if(method === "completed"){
+			this.completeView();
+		} else {
+			this.allView();
+		}
+	},
+	onoffLineListener : function(){
+		$(header).toggleClass("offline", navigator.offLine);
+	},
+	changeStateFilter : function(e){
+		e.preventDefault();
+
+		var target = $(e.target);
+		if(target.get(0).tagName.toLowerCase() !== "a") return;
+		
+		var href = target.attr("href");
+		if(href === "active"){
+			history.pushState({"method":"active"}, null, "active");
+			this.activeView();
+		} else if(href === "completed"){
+			history.pushState({"method":"completed"}, null, "completed");
+			this.completeView();
+		} else {
+			history.pushState({"method":"all"}, null, "index.html");
+			this.allView();
+		}
+		this.changeSelectedClass(target);
 	},
 	build : function(todo, key){
 		var todoObj = { title : todo , insertId : key}
@@ -55,7 +92,7 @@ var TODO = {
 		var input = $(e.target);
 		var li = input.parents("li");
 		var completed = input.is(":checked")?"1":"0";
-		$.post(this.TODO_URL+li.data("key"),completed, function(result){
+		$.post(this.TODO_URL+li.data("key"), function(result){
 			li.toggleClass("completed", input.is(":checked"));
 		});
 	}, 
@@ -69,6 +106,20 @@ var TODO = {
 				li.remove();
 			})
 		}.bind(this));
+	},
+	allView : function(){
+		$("#todo-list").removeClass("all-active").removeClass("all-completed");
+	},
+	activeView : function(){
+		$("#todo-list").addClass("all-active").removeClass("all-completed");
+	},
+	completeView : function(){
+		$("#todo-list").removeClass("all-active").addClass("all-completed");
+	},
+	changeSelectedClass : function(target){
+		target.addClass("selected");	
+		this.selectedTarget.removeClass("selected");
+		this.selectedTarget = target;
 	}
 }
 
