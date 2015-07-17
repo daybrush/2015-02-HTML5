@@ -10,36 +10,39 @@ document.addEventListener('DOMContentLoaded', function(){
 
 	inputTodo.on('keypress', addTodo);
 
+	$('#todo-list').on('transitionend', 'li.deleting', function(e){
+		e.target.remove();
+	});
+
 	function addTodo(e) {
 		if (e.keyCode === ENTER_KEYCODE) {
 			var context = {todo: inputTodo[0].value};
 			inputTodo[0].value = "";
 
-			var todo = todoTemplate(context);
+			var todo = $(todoTemplate(context));
 			ulTodoList.append(todo);
 			
-			$('#todo-list li:last .toggle').on('click', completeTodo);
-			$('#todo-list li:last .destroy').on('click', removeTodo);
-			addAnimation();
+			appendingAnimate();
+			
+			$('#todo-list li:last').on('click', '.toggle', completeTodo);
+			$('#todo-list li:last').on('click', '.destroy', removeTodo);
 		}
 
 	}
 
-	function addAnimation() {
-		setTimeout(function(){
-			$('.appending').removeClass('appending');
-		}, 100);
+	function appendingAnimate() {
+		// css update...why...
+		todo.css('opacity');
+		$('.appending').removeClass('appending');
 	}
 
 	function completeTodo(e) {
-		$(e.target).parents('li').toggleClass('completed');
+		$(e.delegateTarget).toggleClass('completed');
 	}
 
 	function removeTodo(e) {
-		$(e.target).parents('li').addClass('deleting');
-		setTimeout(function(){
-			$(e.target).parents('li').remove();
-		}, 1000);
+		$(e.delegateTarget).addClass('deleting');
 	}
+
 
 });
