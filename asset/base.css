@@ -273,6 +273,7 @@ label[for='toggle-all'] {
 	appearance: none;
 }
 
+/*체크박스*/
 #todo-list li .toggle:after {
 	content: '✔';
 	/* 40 + a couple of pixels visual adjustment */
