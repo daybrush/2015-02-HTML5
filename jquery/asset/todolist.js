@@ -48,7 +48,8 @@ $(function(){
 		var li = target.parents("li");
 		li.addClass("deleteAnimate");
 		
-		li.on("animationend", function(){
+		// one 메소드를 통해 추가된 이벤트는 딱 한번만 실행되고 사라진다(리스너를 제거함)
+		li.one("animationend", function(){
 			// native javascript로 삭제하는 방식이 이 경우에는 더 직관적인것 같다
 			// this.parentNode.removeChild(this);
 			target.closest('li').remove();
