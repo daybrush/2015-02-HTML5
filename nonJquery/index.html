@@ -83,7 +83,7 @@
 	-->
 
 	<script id="Todo-template" type="text/x-handlebars-template">
-		<li class="{}">
+		<li class="{} {{completed}}" data-key="{{key}}">
 			<div class="view">
 				<input class="toggle" type="checkbox" {}>
 				<label>{{todoMessage}}</label>
