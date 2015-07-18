@@ -1,39 +1,36 @@
-var TODOSync = {
-	get : function(callback){
+var Ajax = {
+	send : function(sHttpMethod, bAsync, sGlobalUrl, sApi, sParam, callback){
 		var xhr = new XMLHttpRequest();
-		xhr.open("GET","http://128.199.76.9:8002/hataeho1",true);
+		xhr.open(sHttpMethod,sGlobalUrl+sApi,bAsync);
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
 		xhr.addEventListener("load", function(e){
 			callback(JSON.parse(xhr.responseText));
 		});
-		xhr.send(null);
+		xhr.send(sParam);
+	}
+}
+
+var TODOSync = {
+	globalUrl : "http://128.199.76.9:8002",
+	get : function(callback){
+		Ajax.send("GET", true, this.globalUrl, "/hataeho1", null, function(jsonData){
+			callback(jsonData);
+		});
 	},
 	add : function(sTodo, callback){
-		var xhr = new XMLHttpRequest();
-		xhr.open("PUT","http://128.199.76.9:8002/hataeho1",true);
-		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
-		xhr.addEventListener("load", function(e){
-			callback(JSON.parse(xhr.responseText));
+		Ajax.send("PUT", true, this.globalUrl, "/hataeho1", "todo="+sTodo, function(jsonData){
+			callback(jsonData);
 		});
-		xhr.send("todo="+sTodo);
 	},
 	completed : function(param, callback){
-		var xhr = new XMLHttpRequest();
-		xhr.open("POST","http://128.199.76.9:8002/hataeho1/"+param.key,true);
-		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
-		xhr.addEventListener("load", function(e){
-			callback(JSON.parse(xhr.responseText));
+		Ajax.send("POST", true, this.globalUrl, "/hataeho1/"+param.key, "completed="+param.completed, function(jsonData){
+			callback(jsonData);
 		});
-		xhr.send("completed="+param.completed);
 	},
 	remove : function(param, callback){
-		var xhr = new XMLHttpRequest();
-		xhr.open("DELETE","http://128.199.76.9:8002/hataeho1/"+param.key,true);
-		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
-		xhr.addEventListener("load", function(e){
-			callback(JSON.parse(xhr.responseText));
+		Ajax.send("DELETE", true, this.globalUrl, "/hataeho1/"+param.key, null, function(jsonData){
+			callback(jsonData);
 		});
-		xhr.send(null);
 	}
 }
 
@@ -52,12 +49,13 @@ var TODO = {
 		var document = window.document;
 		arrTodos.forEach(function(arr) {
 			var completed = arr.completed == 1 ? "completed" : "";
-			var sTodoEle = this.build(arr.todo, arr.id, completed);
+			var checked = arr.completed == 1 ? "checked" : "";
+			var sTodoEle = this.build(arr.todo, arr.id, completed, checked);
 			var todoList = document.getElementById("todo-list");
 			todoList.insertAdjacentHTML("beforeend", sTodoEle);
 		}.bind(this));
 	},
-	build : function(sTodoMessage, nKey, completed) {
+	build : function(sTodoMessage, nKey, completed, checked) {
 		if(sTodoMessage === "") {
 			throw new EmptyStringError("missing Todo Message");
 		}
@@ -65,7 +63,7 @@ var TODO = {
 		var source = document.getElementById("Todo-template").innerHTML;
 		var template = Handlebars.compile(source);
 
-		var context = {todoMessage : sTodoMessage, key : nKey, completed : completed};
+		var context = {todoMessage : sTodoMessage, key : nKey, completed : completed, checked : checked};
 		var sHtml = template(context);
 		return sHtml;
 	},
