@@ -1,28 +1,23 @@
 $(function(){
 	var ENTER_KEYCODE = 13;
 
-	var document = window.document;
-
 	$(document).on("keydown", addTodo);
 	$("#todo-list").on("click", "input.toggle", completeTodo);
-	$("#todo-list").on("click", "button.destroy", removeTodo);
+	$("#todo-list").on("click", "button.destroy", markRemoveTodo);
+	$("#todo-list").on("animationend", "li.deleteAnimate", removeTodoEle);
 
 	function completeTodo(e) {
-		var target = $(e.target);
-
-		var li = target.closest("li");
+		var li = $(e.target).closest("li");
 		li.toggleClass("completed");
 	}
 
-	function removeTodo(e) {
-		var target = $(e.target);
-
-		var li = target.parents("li");
+	function markRemoveTodo(e) {
+		var li = $(e.target).parents("li");
 		li.addClass("deleteAnimate");
-		
-		li.one("animationend", function(){
-			target.closest('li').remove();
-		});
+	}
+
+	function removeTodoEle(e) {
+		$(e.target).remove();
 	}
 
 	function addTodo(e) {
@@ -44,12 +39,9 @@ $(function(){
 			throw new EmptyStringError("missing Todo Message");
 		}
 		
-		var source = $("#Todo-template").html();
-		var template = Handlebars.compile(source);
-
 		var context = {todoMessage : sTodoMessage};
-		var sHtml = template(context);
-		return sHtml;
+		var template = Handlebars.compile($("#Todo-template").html());
+		return template(context);
 	}
 	
 	function EmptyStringError(sMessage) {
