@@ -16,41 +16,58 @@ xhr.addEventListener("load", function(e) {
 xhr.send();
 */
 var TODOSync = {
+    url: "http://128.199.76.9:8002/milooy",
     get: function(callback) {
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", "http://128.199.76.9:8002/milooy", true); //api
-        xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded; charset=UTF-8"); //헤더설정
-        xhr.addEventListener("load", function(e) {
-            callback(JSON.parse(xhr.responseText)); //JSON.parse하면 객체화된다.
+        $.ajax({
+            type: "GET",
+            url: this.url,
+            data: {},
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded; charset=UTF-8");
+            },
+            success: function(res){
+                callback(res);
+            }
         });
-        xhr.send();
     },
     add: function(todo, callback) {
-        var xhr = new XMLHttpRequest();
-        xhr.open("PUT", "http://128.199.76.9:8002/milooy", true); //api
-        xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded; charset=UTF-8"); //헤더설정
-        xhr.addEventListener("load", function(e) {
-            callback(JSON.parse(xhr.responseText)); //JSON.parse하면 객체화된다.
+        $.ajax({
+            type: "PUT",
+            url: this.url,
+            data: { todo: todo },
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded; charset=UTF-8");
+            },
+            success: function(res){
+                callback(res);
+            }
         });
-        xhr.send("todo="+todo);
     },
     completed: function(param, callback) {
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "http://128.199.76.9:8002/milooy/"+param.key, true); //api
-        xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded; charset=UTF-8"); //헤더설정
-        xhr.addEventListener("load", function(e) {
-            callback(JSON.parse(xhr.responseText)); //JSON.parse하면 객체화된다.
+        $.ajax({
+            type: "POST",
+            url: this.url+"/"+param.key,
+            data: { completed: param.completed },
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded; charset=UTF-8");
+            },
+            success: function(res){
+                callback(res);
+            }
         });
-        xhr.send("completed="+param.completed);
     },
     remove: function(param, callback) {
-        var xhr = new XMLHttpRequest();
-        xhr.open("DELETE", "http://128.199.76.9:8002/milooy/"+param.key, true); //api
-        xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded; charset=UTF-8"); //헤더설정
-        xhr.addEventListener("load", function(e) {
-            callback(JSON.parse(xhr.responseText)); //JSON.parse하면 객체화된다.
+        $.ajax({
+            type: "DELETE",
+            url: this.url+"/"+param.key,
+            data: { completed: param.completed },
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded; charset=UTF-8");
+            },
+            success: function(res){
+                callback(res);
+            }
         });
-        xhr.send();
     }
 }
 
