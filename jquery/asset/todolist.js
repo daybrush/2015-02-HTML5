@@ -4,15 +4,11 @@ $(function(){
 	var document = window.document;
 
 	$(document).on("keydown", addTodo);
-	$("#todo-list").on("click", completeTodo);
-	$("#todo-list").on("click", removeTodo);
+	$("#todo-list").on("click", "input.toggle", completeTodo);
+	$("#todo-list").on("click", "button.destroy", removeTodo);
 
 	function completeTodo(e) {
 		var target = $(e.target);
-
-		if(!target.is("input.toggle")) {
-			return;
-		}
 
 		var li = target.closest("li");
 		li.toggleClass("completed");
@@ -20,10 +16,6 @@ $(function(){
 
 	function removeTodo(e) {
 		var target = $(e.target);
-
-		if(!target.is("button.destroy")) {
-			return;
-		}
 
 		var li = target.parents("li");
 		li.addClass("deleteAnimate");
