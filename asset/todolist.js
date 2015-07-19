@@ -1,3 +1,8 @@
+// TODO 
+// TODO : initData, add 중복 제거
+// jquery의 select 사용시 [0] 이런식으로밖에 못쓰ㄴ ㅏ....
+// TODOsync : add, complete 등 data를 전달하는 ajax통신에서 fetch 사용
+
 var TODO = {
 	ENTER_KEYCODE : 13,
 
@@ -20,9 +25,9 @@ var TODO = {
 		}.bind(this));
 	},
 
+	//TODO : add일 때와 중복되는 로직 리팩토링
 	initData : function() {
 		TODOsync.get(function(json){
-			console.log(json);
 			// for in으로 접근하면 string이 되는 이유는?
 			// for (var todo in json) {
 			// 	console.log(todo);
@@ -32,6 +37,10 @@ var TODO = {
 				var context = {todo: element.todo};
 				this.todo = $(this.todoTemplate(context));
 				this.todo[0].dataset.key = element.id;
+				if (element.completed) {
+					this.todo[0].querySelector('.toggle').checked = element.completed;
+					this.todo.addClass('completed');
+				}
 
 				this.ulTodoList.append(this.todo);
 				this.appendingAnimate.bind(this)();
@@ -79,7 +88,8 @@ var TODO = {
 
 	complete : function(e) {
 		$targetLi = $(e.delegateTarget);
-		var completed = $targetLi.hasClass('completed')?'1':'0';
+		// var completed = $targetLi.hasClass('completed')?'1':'0';
+		var completed = $targetLi.find('.toggle')[0].checked?'1':'0';
 
 		TODOsync.complete({
 			'key' : $targetLi.data('key'),
@@ -98,46 +108,56 @@ var TODO = {
 }
 TODO.init();
 
+var myHeaders = new Headers();
+myHeaders.append('Content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
+
 var TODOsync = {
+	URL : 'http://128.199.76.9:8002/byjo/',
+
 	get : function(callback) {
-		var xhr = new XMLHttpRequest();
-		xhr.open('GET', 'http://128.199.76.9:8002/byjo', true);
-		xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
-		xhr.addEventListener('load', function(e) {
-			callback(JSON.parse(xhr.responseText));
-		});
-		xhr.send();
+		fetch(this.URL, {method : 'GET', headers : myHeaders}).then(function(response) {
+			return response.json();
+		}).then(function(response) {
+			callback(response);
+		})
 	},
 
 	add : function(todo, callback) {
-		var xhr = new XMLHttpRequest();
-		xhr.open('PUT', 'http://128.199.76.9:8002/byjo', true);
-		xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
-		xhr.addEventListener('load', function(e) {
-			callback(JSON.parse(xhr.responseText));
+		$.ajax({
+			method : 'PUT',
+			url : this.URL,
+			data : {'todo' : todo}
+		}).done(function(response) {
+			callback(response);
 		});
-		xhr.send('todo=' + todo);
+		
+		// var form = new FormData();
+		// form.append('todo', todo);
+		// fetch(this.URL, {method : 'PUT', headers : myHeaders, body : form}).then(function(response) {
+		// 	return response.json();
+		// }).then(function(response) {
+		// 	callback(response);
+		// }).catch(function(err) {
+		// 	console.log(err);
+		// })
 	},
 
 	complete : function(param, callback) {
-		var xhr = new XMLHttpRequest();
-		xhr.open('POST', 'http://128.199.76.9:8002/byjo/'+param.key, true);
-		xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
-		xhr.addEventListener('load', function(e) {
-			callback(JSON.parse(xhr.responseText));
+		$.ajax({
+			method : 'POST',
+			url : this.URL + param.key,
+			data : {'completed' : param.completed}
+		}).done(function(response) {
+			callback(response);
 		});
-		xhr.send('completed=' + param.completed);
-
 	},
 
 	remove : function(key, callback) {
-		var xhr = new XMLHttpRequest();
-		xhr.open('DELETE', 'http://128.199.76.9:8002/byjo/'+key, true);
-		xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
-		xhr.addEventListener('load', function(e) {
-			callback(JSON.parse(xhr.responseText));
-		});
-		xhr.send();
+		fetch(this.URL+key, {method : 'DELETE', headers : myHeaders}).then(function(response) {
+			return response.json();
+		}).then(function(response) {
+			callback(response);
+		})
 
 	}
 }
