@@ -5,6 +5,45 @@ $(function() {
 	TODO.init();
 });
 
+var TODOSync = {
+	apiAddress : "http://128.199.76.9:8002",
+	get : function(callback) {
+		$.get(this.url("/hataeho1"))
+			.done(function(data){
+				callback(data);
+			}).fail(this.alertFail);
+	},
+	add : function(sTodo, callback) {
+		$.ajax({
+			method : "PUT",
+			url : this.url("/hataeho1"),
+			data : "todo="+sTodo
+		}).done(function(data){
+			callback(data);
+		}).fail(this.alertFail);
+	},
+	completed : function(param, callback){
+		$.post(this.url("/hataeho1/"+param.key), {completed:param.completed, key:param.key})
+			.done(function(data){
+				callback(data);
+			}).fail(this.alertFail);
+	},
+	remove : function(param, callback) {
+		$.ajax({
+			method : "DELETE",
+			url : this.url("/hataeho1/"+param.key),
+		}).done(function(data){
+			callback(data);
+		}).fail(this.alertFail);
+	},
+	url : function(sApi) {
+		return this.apiAddress + sApi;
+	},
+	alertFail : function() {
+		alert("Transient error has occurred. Please try again later");
+	}
+}
+
 var TODO = {
 	ENTER_KEYCODE : 13,
 	init : function() {
@@ -12,10 +51,24 @@ var TODO = {
 		$("#todo-list").on("click", "input.toggle", this.completed);
 		$("#todo-list").on("click", "button.destroy", this.markRemveTarget);
 		$("#todo-list").on("animationend", "li.deleteAnimate", this.remove);	
+		TODOSync.get(this.displayTodoList.bind(this));
+	},
+	displayTodoList : function(arrTodo){
+		arrTodo.forEach(function(item){
+			var isCompleted = !!item.completed;
+			var sTodoEle = this.build(item.todo, item.id, (isCompleted)?"completed":"", (isCompleted)?"checked":"");
+			$("#todo-list").append(sTodoEle);
+		}.bind(this));
 	},
 	completed : function(e) {
 		var li = $(e.target).closest("li");
-		li.toggleClass("completed");
+		var completed = !!$("li input:checked").size() ? 1: 0;
+		TODOSync.completed({
+			"key" : li.data("key"),
+			"completed" : completed
+		}, function(){
+			li.toggleClass("completed");
+		});
 	},
 	markRemveTarget : function(e) {
 		var li = $(e.target).parents("li");
@@ -23,6 +76,14 @@ var TODO = {
 	},
 	remove : function(e) {
 		$(e.target).remove();
+		TODOSync.remove({
+			"key" : $(e.target).data("key")
+		}, function(json){
+			if(json.affectedRows !== 1) {
+				alert("Transient error has occurred. Please try again later");
+				location.reload();
+			}
+		});
 	},
 	add : function(e) {
 		if(e.keyCode === this.ENTER_KEYCODE) {
@@ -31,14 +92,16 @@ var TODO = {
 				alert("missing Todo Message");
 			}
 
-			var sTodoEle = this.build(sTodoMsg);
-			$("#todo-list").append(sTodoEle);
-			e.target.value = "";
+			TODOSync.add(sTodoMsg, function(data){
+				var sTodoEle = this.build(sTodoMsg, data.insertId);
+				$("#todo-list").append(sTodoEle);
+				e.target.value = "";
+			}.bind(this));
 		}
 	}, 
-	build : function(sTodoMessage){
+	build : function(sTodoMessage, nKey, completed, checked){
 		if(sTodoMessage === "") return;
-		var context = {todoMessage : sTodoMessage};
+		var context = {todoMessage : sTodoMessage, key : nKey, completed : completed, checked : checked};
 		var template = Handlebars.compile($("#Todo-template").html());
 		return template(context);
 	}
