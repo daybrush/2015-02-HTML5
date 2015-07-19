@@ -8,33 +8,21 @@ $(function() {
 var TODOSync = {
 	apiAddress : "http://128.199.76.9:8002",
 	get : function(callback) {
-		$.get(this.url("/hataeho1"))
-			.done(function(data){
-				callback(data);
-			}).fail(this.alertFail);
+		this.ajax({method:"GET", url:this.url("/hataeho1")}, callback);
 	},
 	add : function(sTodo, callback) {
-		$.ajax({
-			method : "PUT",
-			url : this.url("/hataeho1"),
-			data : "todo="+sTodo
-		}).done(function(data){
-			callback(data);
-		}).fail(this.alertFail);
+		this.ajax({method:"PUT", url:this.url("/hataeho1"), data:"todo="+sTodo}, callback);
 	},
 	completed : function(param, callback){
-		$.post(this.url("/hataeho1/"+param.key), {completed:param.completed, key:param.key})
-			.done(function(data){
-				callback(data);
-			}).fail(this.alertFail);
+		this.ajax({method:"POST", url:this.url("/hataeho1/"+param.key), data:"completed="+param.completed+"&key="+param.key}, callback);
 	},
 	remove : function(param, callback) {
-		$.ajax({
-			method : "DELETE",
-			url : this.url("/hataeho1/"+param.key),
-		}).done(function(data){
-			callback(data);
-		}).fail(this.alertFail);
+		this.ajax({method:"DELETE", url:this.url("/hataeho1/"+param.key)}, callback);
+	},
+	ajax : function(param, callback) {
+		$.ajax({method:param.method, url:param.url, data:param.data})
+		.done(function(data){callback(data);})
+		.fail(this.alertFail);
 	},
 	url : function(sApi) {
 		return this.apiAddress + sApi;
