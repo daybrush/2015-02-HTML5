@@ -15,7 +15,31 @@ var TODO = {
 				e.target.remove();
 			});
 
-			
+			this.initData.bind(this)();
+
+		}.bind(this));
+	},
+
+	initData : function() {
+		TODOsync.get(function(json){
+			console.log(json);
+			// for in으로 접근하면 string이 되는 이유는?
+			// for (var todo in json) {
+			// 	console.log(todo);
+			// 	console.log(todo.todo);
+			// }
+			json.forEach(function(element) {
+				var context = {todo: element.todo};
+				this.todo = $(this.todoTemplate(context));
+				this.todo[0].dataset.key = element.id;
+
+				this.ulTodoList.append(this.todo);
+				this.appendingAnimate.bind(this)();
+				
+				$('#todo-list li:last').on('click', '.toggle', this.complete);
+				$('#todo-list li:last').on('click', '.destroy', this.remove);
+			}.bind(this));
+
 		}.bind(this));
 	},
 
@@ -23,11 +47,9 @@ var TODO = {
 		if (e.keyCode === this.ENTER_KEYCODE) {
 			var context = {todo: this.inputTodo[0].value};
 			TODOsync.add(context.todo, function(json){
-				console.log(json);
 				this.inputTodo[0].value = "";
 
 				this.todo = $(this.todoTemplate(context));
-				console.log(json.insertId);
 				this.todo[0].dataset.key = json.insertId;
 				
 				//왜 안됨
@@ -45,6 +67,9 @@ var TODO = {
 
 		}
 	},
+
+	// js에선 function의 parameter에 상관없이 함수 이름으로만 정의를 하나?
+	// TODOSync의 callback에선 json을 parameter로 하는데 얘는 안그럼 
 	remove : function(e) {
 		$targetLi = $(e.delegateTarget);
 		TODOsync.remove($targetLi.data('key'), function() {
@@ -74,8 +99,14 @@ var TODO = {
 TODO.init();
 
 var TODOsync = {
-	get : function() {
-
+	get : function(callback) {
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET', 'http://128.199.76.9:8002/byjo', true);
+		xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
+		xhr.addEventListener('load', function(e) {
+			callback(JSON.parse(xhr.responseText));
+		});
+		xhr.send();
 	},
 
 	add : function(todo, callback) {
