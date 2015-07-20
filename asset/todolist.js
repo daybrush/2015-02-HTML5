@@ -18,6 +18,13 @@ var TODOSync = {
 				var todoLi = callback.build(json[i].todo, json[i].id);
 				document.getElementById("todo-list").appendChild(todoLi);
 				todoLi.style.opacity = 1;
+
+				if(json[i].completed === 1) {
+					todoLi.className = "completed";
+					todoLi.querySelector("input").checked = true;
+				} else {
+					todoLi.className = "";
+				}					
 			}
 		});
 		xhr.send();
