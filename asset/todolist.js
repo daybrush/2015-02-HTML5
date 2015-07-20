@@ -1,30 +1,55 @@
-// document.addEventListener("DOMContentLoaded", function(evt){
-// 	var txtInput = document.getElementById("new-todo");	
-// 	var todoLists = document.querySelector('ul#todo-list');
-// 	var eleCompleted = document.querySelector(".added");	
+var ENTER_KEYCODE = 13;
+var txtInput = document.getElementById("new-todo");	
+var todoLists = document.querySelector('ul#todo-list');
+var eleCompleted = document.querySelector(".added");
 
-// 	txtInput.addEventListener('keypress', function(evt){
-// 		if(evt.keyCode == 13){
-// 			var sTxt = txtInput.value;
-// 			if(eleCompleted.style.display == ""){
-// 				insertTxt(".view label", sTxt);
-// 				eleCompleted.style.display = "block";		
-			
-// 			} else {
-// 				var newCompleted = eleCompleted.cloneNode(true);
-// 				insertTxt(".view label", sTxt);
-// 				todoLists.insertAdjacentElement('beforeend', newCompleted);	
-// 			}			
-// 		}
-		
-// 		function insertTxt(ele, string){
-// 			document.querySelector(ele).innerHTML = string;
-// 			txtInput.value = "";				
-// 		}		
-// 	}, false);
+function makeTodo(evt){
+	var sTxt = this.value;
 	
-// })
+	if((evt.keyCode == ENTER_KEYCODE) && (sTxt != "")){	
+		var newCompleted = eleCompleted.cloneNode(true);
+		newCompleted.querySelector(".view label").innerHTML = sTxt;
+		newCompleted.style.display = "block";
+		todoLists.insertAdjacentElement('beforeend', newCompleted);
+		
+		txtInput.value = "";
+	}
+}
 
+function finishCheckingTodo(evt){
+	if(evt.target.tagName == "INPUT")
+		evt.target.parentNode.parentNode.classList.toggle("completed");	
+}
+
+function deleteTodo(evt){
+	if(evt.target.tagName == "BUTTON"){
+		var clickedList = evt.target.parentNode;
+		clickedList.style.opacity = 1;
+		
+		var ticktock = function(){
+			clickedList.style.opacity = +clickedList.style.opacity - 0.08;
+			
+			if(+clickedList.style.opacity > 0){
+				(window.requestAnimationFrame && requestAnimationFrame(ticktock)) || setTimeout(ticktock, 				17)
+			}
+		};
+		
+		ticktock();
+		clickedList.parentNode.parentNode.removeChild(clickedList.parentNode);
+	}
+
+}
+
+
+document.addEventListener("DOMContentLoaded", function(evt){
+	txtInput.addEventListener('keypress', makeTodo);
+	todoLists.addEventListener('click', finishCheckingTodo);
+	todoLists.addEventListener('click', deleteTodo);
+		
+
+})
+//
+/*
 var ENTER_KEYCODE = 13;
 
 function makeTodo(){
@@ -59,7 +84,4 @@ function addTodo(e){
 document.addEvnetListener("DOMContentLoaded", function(){
 	document.getElementById("new-todo").addEventListenr("keydown", addTodo	
 });
-
-
-//window.addEventListener("load", func);
-//document.addEvnetListener("DOMContentLoaded", func);
+*/
