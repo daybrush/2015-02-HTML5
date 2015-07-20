@@ -13,7 +13,8 @@
 $(document).ready(function () {
 	$("#new-todo").on("keydown", addTodo);
 	$("#todo-list").on("click", "input", completeTodo);
-	$("#todo-list").on("click", "button", deleteTodo);
+	$("#todo-list").on("click", "button", startDeleteAnimation);
+	$("#todo-list").on("animationend", "li", deleteTodo);
 
 	function addTodo(ev) {
 		var ENTER_KEYCODE = 13;
@@ -42,22 +43,16 @@ $(document).ready(function () {
 		}
 	}
 
-	function deleteTodo(ev) {
+	function startDeleteAnimation(ev) {
 		var button = ev.currentTarget;
 		var li = button.parentNode.parentNode;
-		var start = null;
-		window.requestAnimationFrame(deleteStep); //질문. requestAnimationFrame은 window에만 바인딩해줘야 하는걸까? li에 바인딩 해주면 안되나?
-		
-		function deleteStep(timestamp) {
-			if(!start) start = timestamp;
-				var progress = timestamp - start;
-		  		li.style.opacity = 1 - progress * 0.01;
-		 	if (progress < 200) {
-		    	window.requestAnimationFrame(deleteStep);
-		 	}
-		  	else {
-		  		li.parentNode.removeChild(li);
-		  	}
+		li.className = "deleting";
+	}
+
+	function deleteTodo(ev) {
+		var li = ev.currentTarget;
+		if(li.className === "deleting"){
+			li.parentNode.removeChild(li);
 		}
 	}
 

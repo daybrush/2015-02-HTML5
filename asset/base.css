@@ -195,6 +195,25 @@ label[for='toggle-all'] {
 	border-bottom: 1px dotted #ccc;
 	-webkit-transition: opacity 1s;
 	transition: opacity 1s;
+	animation-name: register;
+	animation-duration: .5s;
+	animation-timing-function: ease;
+}
+
+@keyframes delete {
+    from {opacity: 1;}
+    to {opacity: 0;}
+}
+
+@keyframes register {
+	from {opacity: 0;}
+	to {opacity: 1;}
+}
+
+#todo-list li.deleting {
+	animation-name: delete;
+	animation-duration: .5s;
+	animation-timing-function: ease;
 }
 
 #todo-list li.appending{
