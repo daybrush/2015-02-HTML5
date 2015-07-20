@@ -1,6 +1,16 @@
 var TODOSync = {
-	get : function() {
-
+	get : function(callback) {
+		var xhr = new XMLHttpRequest();
+		
+		xhr.open("GET", "http://128.199.76.9:8002/kimhyewon/", true);
+		
+		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
+		
+		xhr.addEventListener("load", function(e){
+			callback(JSON.parse(xhr.responseText));
+		});
+		
+		xhr.send(null);
 	},
 	add : function(todo, callback) {
 		var xhr = new XMLHttpRequest();
@@ -28,8 +38,18 @@ var TODOSync = {
 		
 		xhr.send("completed=" + param.completed);
 	},
-	deleted : function() {
-
+	deleted : function(param, callback) {
+		var xhr = new XMLHttpRequest();
+		
+		xhr.open("DELETE", "http://128.199.76.9:8002/kimhyewon/" + param.key, true);
+		
+		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
+		
+		xhr.addEventListener("load", function(e){
+			callback(JSON.parse(xhr.responseText));
+		});
+		
+		xhr.send(null);
 	}
 }
 
@@ -40,7 +60,18 @@ var TODO = {
 			document.getElementById("new-todo").addEventListener("keydown", this.add.bind(this));
 			document.getElementById("todo-list").addEventListener("click", this.completed); //this 안썻기 때메 굳이 bind 필요 없다 
 			document.getElementById("todo-list").addEventListener("click", this.deleted);
+			this.get();
 		}.bind(this))
+	},
+	get : function() {
+		TODOSync.get(function(e){
+			for(var i=0; i<e.length; i++) {
+				var completed = e.completed == 1 ? "completed" : null;
+				var todoLi = this.build(e.todo, e.id, completed);
+				document.getElementById("todo-list").insertAdjacentHTML('beforeend', todoLi);
+			}
+		}.bind(this));
+
 	},
 	build : function(enteredTitle, key, completed) {
 		var source = document.getElementById("todo-template").innerHTML;
@@ -100,15 +131,16 @@ var TODO = {
 		var button = e.target;
 		if(button.className === "destroy") {	//이 부분 꼭 필요! 
 			var li = e.target.parentNode.parentNode;
-			li.className = "deleting";
-				
-			li.addEventListener("transitionend", function(){
-				li.parentNode.removeChild(li);
-			})
 
-			//setTimeout(function () {
-			//	li.parentNode.removeChild(li);
-	  		//}, 1000);
+			TODOSync.deleted({
+				"key" : li.dataset.key
+			}, function(){
+				li.className = "deleting";
+				
+				li.addEventListener("transitionend", function(){
+					li.parentNode.removeChild(li);
+				}.bind(this))
+			})
 		}
 	}
 };
