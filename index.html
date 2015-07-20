@@ -7,11 +7,13 @@
 		<script type="text/javascript" src="asset/todolist.js"></script>
 		<script type="text/javascript" src="asset/handlebars-v3.0.3.js"></script>
 		<script id="todo-template" type="text/x-handlebars-template">
+			<li class="{{completed}}" data-key="{{key}}">
 				<div class="view">
 					<input class="toggle" type="checkbox" {}>
 					<label>{{title}}</label>
 					<button class="destroy"></button>
 				</div>
+			</li>
 		</script>
 
 	</head>

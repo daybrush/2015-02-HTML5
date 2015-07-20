@@ -1,3 +1,38 @@
+var TODOSync = {
+	get : function() {
+
+	},
+	add : function(todo, callback) {
+		var xhr = new XMLHttpRequest();
+		
+		xhr.open("PUT", "http://128.199.76.9:8002/kimhyewon/", true);
+		
+		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
+		
+		xhr.addEventListener("load", function(e) {
+			callback(JSON.parse(xhr.responseText))
+		});
+		
+		xhr.send("todo=" + todo);
+	},
+	completed : function(param, callback) {
+		var xhr = new XMLHttpRequest();
+		
+		xhr.open("POST", "http://128.199.76.9:8002/kimhyewon/" + param.key, true);
+		
+		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
+		
+		xhr.addEventListener("load", function(e) {
+			callback(JSON.parse(xhr.responseText))
+		});
+		
+		xhr.send("completed=" + param.completed);
+	},
+	deleted : function() {
+
+	}
+}
+
 var TODO = {
 	ENTER_KEYCODE : 13,
 	init : function() {
@@ -7,53 +42,59 @@ var TODO = {
 			document.getElementById("todo-list").addEventListener("click", this.deleted);
 		}.bind(this))
 	},
-	build : function(enteredTitle) {
+	build : function(enteredTitle, key, completed) {
 		var source = document.getElementById("todo-template").innerHTML;
 		var template = Handlebars.compile(source);
-		var context = {title : enteredTitle};
+		var context = {title : enteredTitle, key : key, completed : completed};
 		var todo = template(context);
 
 		return todo;
 	},
 	add : function(e) {
 		if(e.keyCode === this.ENTER_KEYCODE) {
-			var li = document.createElement("li");
-			li.className = "appending";
-			document.getElementById("todo-list").appendChild(li);
+			var todo = e.target.value;
 
-			var todo = this.build(e.target.value);
-			li.insertAdjacentHTML('beforeend', todo);
-			document.getElementById("new-todo").value = "";
+			//콜백으로 변경 
+			TODOSync.add(todo, function(json) {
+				console.log(json);
 
-			// document.getElementById("todo-list").addEventListener('webkitTransitionEnd', function() {
-			// 	console.log("hi");
-				// li.className = "";
-			// });
+				var todoLi = this.build(todo, json.insertId);	//key값 넣어줌 
+				document.getElementById("todo-list").insertAdjacentHTML('beforeend', todoLi);
+				document.getElementById("new-todo").value = "";
+					
+				var target = document.getElementById("todo-list").querySelector("li:nth-last-child(1)");
+				target.className = "appending";
 
-			// li.addEventListener("transitionstart", function(){
-			// 	console.log("hihi");
-			// 	li.className = "";
-			// })
+			
+				//이 부분도 deleteTODO 에서와 마찬가지로 transitionend를 써서 동일하게 구현하고 싶은데
+				//두 개가 동작 방식 자체가 다른건지 이 부분은 transitionend 코드가 동작하지 않네요 
+				//여기에도 transitionend을 써서 구현할 수 있나요? 
+		    	setTimeout(function () {
+		       	 	target.className = "";
+		   	 	}, 100);
 
-			//이 부분도 deleteTODO 에서와 마찬가지로 transitionend를 써서 동일하게 구현하고 싶은데
-			//두 개가 동작 방식 자체가 다른건지 이 부분은 transitionend 코드가 동작하지 않네요 
-			//여기에도 transitionend을 써서 구현할 수 있나요? 
-	    	setTimeout(function () {
-	       	 	li.className = "";
-	   	 	}, 100);
+			}.bind(this));
 		}
 	}, 
 	completed : function(e) {
 		var input = e.target;
-		if(input.className === "toggle") {	//이 부분 꼭 필요! 
-			var li = e.target.parentNode.parentNode;
-			if(input.checked) {
-				li.className = "completed";
+		var li = e.target.parentNode.parentNode;
+		var completed = input.checked?"1":"0";	//체크 돼있으면 1, 안돼있으면 0 
+
+		TODOSync.completed({
+			"key" : li.dataset.key,
+			"completed" : completed
+		}, function() {
+			if(input.className === "toggle") {	//이 부분 꼭 필요! 
+				if(completed==="1") {
+					li.className = "completed";
+				}
+				else {
+					li.className = "";
+				}
 			}
-			else {
-				li.className = "";
-			}
-		}
+		})
+		
 	},
 	deleted : function(e) {
 		var button = e.target;
