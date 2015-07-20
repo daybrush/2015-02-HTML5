@@ -65,13 +65,12 @@ var TODO = {
 	},
 	get : function() {
 		TODOSync.get(function(e){
-			for(var i=0; i<e.length; i++) {
-				var completed = e.completed == 1 ? "completed" : null;
-				var todoLi = this.build(e.todo, e.id, completed);
+			e.forEach(function(arr){
+				var completed = arr.completed == 1 ? "completed" : null;
+				var todoLi = this.build(arr.todo, arr.id, completed);
 				document.getElementById("todo-list").insertAdjacentHTML('beforeend', todoLi);
-			}
+			}.bind(this));
 		}.bind(this));
-
 	},
 	build : function(enteredTitle, key, completed) {
 		var source = document.getElementById("todo-template").innerHTML;
