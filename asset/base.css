@@ -201,8 +201,8 @@ label[for='toggle-all'] {
 	animation-name: addTodo;
 	animation-duration: 1s;
 
-	-webkit-transition: opacity 1s;
-	transition: opacity 1s;
+	-webkit-transition: opacity 1s, -webkit-transform 1s;
+	transition: opacity 1s, -webkit-transform 1s;
 }
 
 /* Chrome, Safari, Opera */
@@ -223,6 +223,17 @@ label[for='toggle-all'] {
 #todo-list li.deleting{
 	opacity: 0;
 }
+
+
+
+/*
+#todo-list li.completed {
+	-webkit-transform: rotateY(540deg); 
+	transform: rotateY(540deg);
+}
+*/
+
+
 
 #todo-list li:last-child {
 	border-bottom: none;
@@ -287,6 +298,8 @@ label[for='toggle-all'] {
 	-webkit-transition: color 0.4s;
 	transition: color 0.4s;
 }
+
+
 
 #todo-list li.completed label {
 	color: #a9a9a9;
