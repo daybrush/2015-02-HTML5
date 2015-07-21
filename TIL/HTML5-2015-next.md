@@ -114,5 +114,10 @@
         * 추가할때
         * 완료할때
         * 삭제할때
-        * 
+
+## 0714 수업
+- CSS animation
+    + js animation보다 더 성능이 좋다. 백그라운드로 돌아가니까.
+- requestAnimationFrame 부드러움
+    + 모니터 갱신 주기에 맞춰서 바뀌니.
     
