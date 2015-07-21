@@ -201,17 +201,6 @@ label[for='toggle-all'] {
 	transition: max-height 1s, opacity 1s;
 }
 
-#todo-list li.appending{
-	opacity: 0;
-}
-
-#todo-list li.deleting{
-	/*http://stackoverflow.com/questions/3508605/css-transition-height-0-to-height-auto/20226830*/
-	max-height: 0;
-	overflow: hidden;
-	opacity: 0;
-}
-
 #todo-list li:last-child {
 	border-bottom: none;
 }
