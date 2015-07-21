@@ -126,4 +126,3 @@ var todo = {
 };
 
 todo.init();
-
