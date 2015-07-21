@@ -1,33 +1,17 @@
 /*
-TODO
--완료하기
-삭제하기
-초기에 모두 불러오기
-TODOSync를 개선하기(코드반복)
-*/
-
-/*
-var xhr = new XMLHttpRequest();
-xhr.open(, ,);
-xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded; charset=UTF-8");
-xhr.addEventListener("load", function(e) {
-
-});
-xhr.send();
+Question
 */
 var TODOSync = {
     url: "http://128.199.76.9:8002/milooy",
+    contentType: "application/x-www-form-urlencoded; charset=UTF-8",
     get: function(callback) {
         $.ajax({
             type: "GET",
             url: this.url,
             data: {},
-            beforeSend: function (xhr) {
-                xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded; charset=UTF-8");
-            },
-            success: function(res){
-                callback(res);
-            }
+            contentType: this.contentType,
+        }).done(function(data){
+            callback(data);
         });
     },
     add: function(todo, callback) {
@@ -35,12 +19,9 @@ var TODOSync = {
             type: "PUT",
             url: this.url,
             data: { todo: todo },
-            beforeSend: function (xhr) {
-                xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded; charset=UTF-8");
-            },
-            success: function(res){
-                callback(res);
-            }
+            contentType: this.contentType,
+        }).done(function(data){
+            callback(data);
         });
     },
     completed: function(param, callback) {
@@ -48,12 +29,9 @@ var TODOSync = {
             type: "POST",
             url: this.url+"/"+param.key,
             data: { completed: param.completed },
-            beforeSend: function (xhr) {
-                xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded; charset=UTF-8");
-            },
-            success: function(res){
-                callback(res);
-            }
+            contentType: this.contentType,
+        }).done(function(data){
+            callback(data);
         });
     },
     remove: function(param, callback) {
@@ -61,19 +39,16 @@ var TODOSync = {
             type: "DELETE",
             url: this.url+"/"+param.key,
             data: { completed: param.completed },
-            beforeSend: function (xhr) {
-                xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded; charset=UTF-8");
-            },
-            success: function(res){
-                callback(res);
-            }
+            contentType: this.contentType,
+        }).done(function(data){
+            callback(data);
         });
     }
 }
 
 var TODO = {
     ENTER_KEYCODE: 13,
-    init: function() { //즉시실행함수 삭제
+    init: function() { //즉시실행함수 삭제함
         this.initTODO();
         $('#new-todo').keydown(this.add.bind(this));
         $('#todo-list').on( "click", '.toggle', this.completed)
@@ -104,7 +79,16 @@ var TODO = {
                 });
             }
         }, this));
-
+    },
+    appendTODOHTML: function(todo, key, completed){
+        var source   = $("#todo-template").html();
+        var template = Handlebars.compile(source);
+        var data = {
+            todo : todo,
+            key: key,
+            completed: completed
+        };
+        $("#todo-list").append(template(data));
     },
     add: function(e) {
         if($('#new-todo').val() && e.keyCode === this.ENTER_KEYCODE) {
@@ -112,14 +96,7 @@ var TODO = {
             //그냥 하면 비동기라 꼬이므로 콜백으로 넣어준다.
             TODOSync.add(todo, function(json){
                 var key = json.insertId;
-
-                var source   = $("#todo-template").html();
-                var template = Handlebars.compile(source);
-                var data = {
-                    todo : todo,
-                    key: key
-                };
-                $("#todo-list").append(template(data));
+                TODO.appendTODOHTML(todo, key, 0);
                 $('#new-todo').val("");
             });
         }
@@ -130,16 +107,9 @@ var TODO = {
             for(i in json){
                 var item = json[json.length-i-1]; // item 역순정렬
                 var completed = item.completed==1? 'completed' : null;
-                var source = $("#todo-template").html();
-                var template = Handlebars.compile(source);
 
-                var data = {
-                    todo : item.todo,
-                    key: item.id,
-                    completed: completed
-                };
+                TODO.appendTODOHTML(item.todo, item.id, completed);
 
-                $("#todo-list").append(template(data));
                 // 체크박스 속성 checked 추가.
                 if(completed!=null) $("#todo-list li:last-child input").attr("checked", true);
             }
