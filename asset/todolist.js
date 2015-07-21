@@ -1,63 +1,37 @@
 //document.addEventListener["load", fp];
 //document.addEventListener["DOMContentLoaded", fp];
 
-// var TODO = {
-// 	get : function (context) {
-// 		this.get = function (context) {
-// 			var html =  $("#entry-template").html();
-// 			var template = Handlebars.compile(html);
-// 			return template(context);
-// 		}
-// 	}
-// }
 var TODO = {
-	target : null,
-	getContext:function () {
-		return {target: this.target.value}
-	},
     get: function(context) {
     	var html = $("#entry-template").html();
     	var template = Handlebars.compile(html);
     	this.get = template;
         return template(context);
     }
-
 }
 
-function completedTODO (e) {
-    var input = e.target;
-    var li = input.parentNode.parentNode;
-    if(input.checked){
-        li.className = "completed";
+function completedTODO (target) {
+    var li = $(target).closest("li");
+    if(target.checked){
+    	li.addClass("completed");
     }else{
-        li.className = "";
+    	li.removeClass("completed");
     }
 }
 
-function removeTODO (e) {
-    var li = e.target.parentNode.parentNode;
-    //이렇게 하면 fadeout 이 먹히는데
-    // $("#new-todo").fadeOut(1000, function() {
-    //이렇게 하면 fadeout 이 않먹혀요 왜그런건가요?
-    // $(li).fadeOut(1000, function() {
-    //     li.parentNode.removeChild(li);
-    // })
-    
-    $(li).addClass("deleting");
-    setTimeout(function() {
-        li.parentNode.removeChild(li);
-    },1000);
+function removeTODO (li) {
+	li.one("transitionend", function () {
+		li.remove();
+	});
+    li.addClass("deleting");
 }
 
 function addTODO (e) {
-    if(!TODO.target){ 
-        TODO.target = document.getElementById("new-todo"); 
-    }
     var oUl = document.getElementById("todo-list");
-    var context = TODO.getContext();
+    var context = {target: TODO.target.value}
     var li = TODO.get(context);
-    console.log(li);
     oUl.insertAdjacentHTML('afterbegin', li);
+    //이부분 settimeout 없이 그냥 에니메이션 하려면 어떻게 해야 하나요?
     setTimeout(function () {
         $("li").removeClass("appending");
     }, 100);
@@ -65,22 +39,19 @@ function addTODO (e) {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
+    TODO.target = document.getElementById("new-todo");
     var ENTER_KEYCODE = 13;
     document.getElementById("new-todo").addEventListener("keydown", function (e) {
         if (e.keyCode == ENTER_KEYCODE) {
             addTODO(e);
         };
     });
-    document.getElementById("todo-list").addEventListener("click", function (e) {
-        e.stopPropagation();
-        if(e.target.classList.contains("toggle")){
-            completedTODO(e);
-        }
 
-        if(e.target.classList.contains("destroy")){
-            removeTODO(e);
-        }
-
-    })
+    $("#todo-list").on("click", ".toggle", function () {
+    	completedTODO(this);
+    });
+    $("#todo-list").on("click", ".destroy", function () {
+    	removeTODO($(this).closest("li"));
+    });
 });
 
