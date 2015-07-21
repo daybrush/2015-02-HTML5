@@ -197,6 +197,7 @@ label[for='toggle-all'] {
 	/*TODO: template으로 transition하는 방법*/
 	opacity: 0;
     animation: fadeIn .8s linear forwards;
+    -webkit-animation: fadeIn .8s linear forwards;
 }
 
 @-moz-keyframes fadeIn {
@@ -272,6 +273,7 @@ label[for='toggle-all'] {
 	appearance: none;
 }
 
+/*체크박스*/
 #todo-list li .toggle:after {
 	content: '✔';
 	/* 40 + a couple of pixels visual adjustment */

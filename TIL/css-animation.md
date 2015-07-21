@@ -180,3 +180,7 @@ http://beautifulcode.tistory.com/12
 [before after로 animation](https://cssanimation.rocks/pseudo-elements/)
 [creative list effects 만들기](http://sarasoueidan.com/blog/creative-list-effects/)
 [transition on DOM removal](http://stackoverflow.com/questions/7000648/css3-transition-on-dom-removal)
+[mdn CSS 트랜지션](https://developer.mozilla.org/ko/docs/Web/Guide/CSS/Using_CSS_transitions)
+[mdn CSS transform](https://developer.mozilla.org/ko/docs/Web/CSS/transform)
+[mdn CSS animation](https://developer.mozilla.org/ko/docs/Web/CSS/Using_CSS_animations)
+
