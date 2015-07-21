@@ -1,6 +1,5 @@
 /*141005 KwonDaye*/
 
-// 역순으로
 // 초록색 토글   
 
 var todoSync = {
@@ -53,7 +52,9 @@ var todo = {
 	init: function() {
 		$(document).ready(function() {
 			todoSync.get(function(json) {
-				for(var i in json) {
+				//console.log(json.length);
+				for(var i = json.length - 1; i >= 0; i--) {
+				//for(var i in json) {
 					var todo = json[i].todo;
 					var className = (json[i].completed == 1) ? "completed" : "";;
 					var li = this.make(todo, json[i].id, className);
