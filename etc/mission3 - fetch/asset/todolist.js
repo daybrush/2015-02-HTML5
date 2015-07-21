@@ -1,35 +1,14 @@
-/**
- * Send Ajax Request
- * @param reqParam Parameters required for the Ajax request
- * @param reqParam.httpMethod Select the http method to use for Ajax requests
- * @param reqParam.async false if you want to proceed Ajax request in a synchronous manner; true(or omit this property) otherwise
- * @param reqParam.url The address to send an Ajax request
- * @param reqParam.sParam The parameter string to be included in the Ajax request
- * @param reqParam.callback Callback function for the Ajax request response
- */
-var Ajax = {
-	send : function(reqParam){
-		var xhr = new XMLHttpRequest();
-		xhr.open(reqParam.httpMethod, reqParam.url, (reqParam.async == undefined) ? true : reqParam.async);
-		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
-		xhr.addEventListener("load", function(e){
-			reqParam.callback(JSON.parse(xhr.responseText));
-		});
-		xhr.send(reqParam.sParam);
-	}
-}
-
 var TODOSync = {
 	apiAddress : "http://128.199.76.9:8002",
 	get : function(callback){
-		Ajax.send({
+		this.fetch({
 			httpMethod : "GET",
 			url : this.url("/hataeho1"),
 			callback : callback
 		}); 
 	},
 	add : function(sTodo, callback){
-		Ajax.send({
+		this.fetch({
 			httpMethod : "PUT",
 			url : this.url("/hataeho1"),
 			sParam : "todo="+sTodo,
@@ -37,7 +16,7 @@ var TODOSync = {
 		}); 
 	},
 	completed : function(param, callback){
-		Ajax.send({
+		this.fetch({
 			httpMethod : "POST",
 			url : this.url("/hataeho1/"+param.key),
 			sParam : "completed="+param.completed,
@@ -45,7 +24,7 @@ var TODOSync = {
 		});
 	},
 	remove : function(param, callback){
-		Ajax.send({
+		this.fetch({
 			httpMethod : "DELETE",
 			url : this.url("/hataeho1/"+param.key),
 			callback : callback
@@ -53,12 +32,36 @@ var TODOSync = {
 	},
 	url : function(sApi) {
 		return this.apiAddress + sApi;
+	},
+	fetch : function(reqParam) {
+		fetch(reqParam.url, {
+			method : reqParam.httpMethod,
+			body : reqParam.sParam,
+			headers : {  
+      			"Content-type": "application/x-www-form-urlencoded; charset=UTF-8"  
+    		}
+		}).then(function(res){
+			if(res.status !== 200) {
+				alert("Transient error has occurred. Please try again later");
+				return;
+			}
+
+			res.json().then(function(data) {
+				reqParam.callback(data);
+			}).catch(function(err) {
+				alert(err);
+			})
+		});
 	}
 }
 
 var TODO = {
 	ENTER_KEYCODE : 13, 
 	init : function(){
+		if(!Util.isBrowserSupportFetch()){
+			alert("Your browser does not support fetch API\n In this the browser, you can not use the service");
+			return;
+		}
 		var document = window.document;
 		document.addEventListener("DOMContentLoaded", function(){
 			document.getElementById("new-todo").addEventListener("keydown", this.add.bind(this));
@@ -144,6 +147,12 @@ var TODO = {
 				e.target.value = "";
 			}.bind(this));
 		}	
+	}
+}
+
+var Util = {
+	isBrowserSupportFetch : function(){
+		return 'fetch' in window;	
 	}
 }
 
