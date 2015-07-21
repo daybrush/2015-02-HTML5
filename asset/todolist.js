@@ -40,13 +40,11 @@ function deleteTodo(evt){
 
 }
 
-
+//
 document.addEventListener("DOMContentLoaded", function(evt){
 	txtInput.addEventListener('keypress', makeTodo);
 	todoLists.addEventListener('click', finishCheckingTodo);
 	todoLists.addEventListener('click', deleteTodo);
-		
-
 })
 //
 /*
