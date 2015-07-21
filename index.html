@@ -8,7 +8,7 @@
 		<script type="text/javascript" src="lib/handlebars-v3.0.3.js"></script>
 		<script type="text/javascript" src="asset/todolist.js"></script>
 		<script id="entry-template" type="text/x-handlerbars-template">
-			<li class="appending">
+			<li data-key="{{key}}" class="appending">
 				<div class="view">
 					<input class="toggle" type="checkbox">
 					<label>{{target}}</label>
