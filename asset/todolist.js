@@ -6,11 +6,16 @@ $("#new-todo").on("keydown",function(e){
 		// 새 리스트 항목 생성
 		var title = $(this).val();
 		var newList = $("li.sample").clone();
+
+		var data = {"title":title};
+		var source = newList.html();
+		var template = Handlebars.compile(source);
+		newList.html(template(data));
+
 		newList.prependTo($("#todo-list"))
 			.css({opacity:0})
-			.removeClass("sample")
-			.find("label").text(title);
-
+			.removeClass("sample");
+		
 		newList.animate({opacity:1.0},400);
 
 		listnum++;
@@ -22,25 +27,19 @@ $("#new-todo").on("keydown",function(e){
 
 // 할일 체크
 $("body").on("click", ".toggle", function(){
-	var list = $(this).parent().parent();
-	if($(this).is(":checked")){
-		list.addClass("completed");
-	}else{
-		list.removeClass("completed");
-	}
+	var list = $(this).closest("li");
+	list.toggleClass("completed");
 })
 
 // 할일 삭제
 $("body").on("click", ".destroy", function(){
-	var list = $(this).parent().parent();
+	var list = $(this).closest("li");
 
 	list.animate({
 		height:'0px'	
 	},400,function(){
 		list.remove();	
 	});
+
+	//list.animate({"height":"0px"},400).remove();
 })
-
-
-var source = $("body").html();
-var template = Handlebars.compile(source);
