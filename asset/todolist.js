@@ -1,24 +1,27 @@
-/*<li class="{}">
-	<div class="view">
-		<input class="toggle" type="checkbox" {}>
-		<label>타이틀</label>
-		<button class="destroy"></button>
-	</div>
-</li>
+/*todo
+* innerHTML + = todo 로 처리했던 부분 insertAdjacentHTML 로 바꾸기 // Done
+* 등록한 할 일을 완료 처리하기 //Done
+*  - 이벤트 할당하기
+*  - class추가하기(li에 completed)
+* 삭제하기 
+*  - 이벤트 할당하기
+*  - li을 서서히 사라지게 처리한 후 삭제
+* 등록하기
+*  - 애니메이션 기능을 추가
 */
 
-(function () {
-	document.addEventListener("DOMContentLoaded", function () {
-		var newtodo = document.getElementById("new-todo");
-		newtodo.addEventListener("keydown", addTodo);
-	})
+$(document).ready(function () {
+	$("#new-todo").on("keydown", addTodo);
+	$("#todo-list").on("click", "input", completeTodo);
+	$("#todo-list").on("click", "button", startDeleteAnimation);
+	$("#todo-list").on("animationend", "li", deleteTodo);
 
 	function addTodo(ev) {
 		var ENTER_KEYCODE = 13;
 		if(ev.keyCode === ENTER_KEYCODE) {
 			var todo = makeTodoList(ev.target.value);
 			var todoList = document.getElementById("todo-list"); 
-			todoList.innerHTML += todo;
+			todoList.insertAdjacentHTML('beforeend', todo);
 			ev.target.value = "";
 		}
 	}
@@ -29,4 +32,29 @@
 		var context = {todoTitle: todo};
 		return template(context);
 	}
-})();
+
+	function completeTodo(ev) {
+		var input = ev.currentTarget;
+		var li = input.parentNode.parentNode;
+		if(input.checked === true) {
+			li.className = "completed";
+		}else {
+			li.className = "";
+		}
+	}
+
+	function startDeleteAnimation(ev) {
+		var button = ev.currentTarget;
+		var li = button.parentNode.parentNode;
+		li.className = "deleting";
+	}
+
+	function deleteTodo(ev) {
+		var li = ev.currentTarget;
+		if(li.className === "deleting"){
+			li.parentNode.removeChild(li);
+		}
+	}
+
+	
+});
