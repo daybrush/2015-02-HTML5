@@ -65,6 +65,9 @@ var TODO = {
 	},
 	get : function() {
 		TODOSync.get(function(e){
+			e = e.sort(function(a,b){
+				return a.id > b.id;
+			});
 			e.forEach(function(arr){
 				var completed = arr.completed == 1 ? "completed" : null;
 				var todoLi = this.build(arr.todo, arr.id, completed);
@@ -72,10 +75,10 @@ var TODO = {
 			}.bind(this));
 		}.bind(this));
 	},
-	build : function(enteredTitle, key, completed) {
+	build : function(enteredTitle, key, completed, opacityVal) {
 		var source = document.getElementById("todo-template").innerHTML;
 		var template = Handlebars.compile(source);
-		var context = {title : enteredTitle, key : key, completed : completed};
+		var context = {title : enteredTitle, key : key, completed : completed, val:opacityVal === undefined?1:opacityVal};
 		var todo = template(context);
 
 		return todo;
@@ -88,21 +91,26 @@ var TODO = {
 			TODOSync.add(todo, function(json) {
 				console.log(json);
 
-				var todoLi = this.build(todo, json.insertId);	//key값 넣어줌 
-				document.getElementById("todo-list").insertAdjacentHTML('beforeend', todoLi);
+				var todoLi = this.build(todo, json.insertId,0,0);	//key값 넣어줌 
+				document.getElementById("todo-list").insertAdjacentHTML('afterbegin', todoLi);
 				document.getElementById("new-todo").value = "";
 					
-				var target = document.getElementById("todo-list").querySelector("li:nth-last-child(1)");
-				target.className = "appending";
+				var target = document.getElementById("todo-list").querySelector("li:nth-child(1)");
+				// target.className = "appendig";
 
-			
-				//이 부분도 deleteTODO 에서와 마찬가지로 transitionend를 써서 동일하게 구현하고 싶은데
-				//두 개가 동작 방식 자체가 다른건지 이 부분은 transitionend 코드가 동작하지 않네요 
-				//여기에도 transitionend을 써서 구현할 수 있나요? 
 		    	setTimeout(function () {
-		       	 	target.className = "";
+		       	 	// target.className = "";
+		       		target.style.opacity = 1; 	
 		   	 	}, 100);
 
+
+				// console.log(target);
+				// target.addEventListener("transitionend", function(){
+				// 	console.log("dddd");
+				// 	// target.className = ""; 
+				// }.bind(this));
+				// target.offsetHeight;
+				
 			}.bind(this));
 		}
 	}, 
@@ -130,6 +138,7 @@ var TODO = {
 		var button = e.target;
 		if(button.className === "destroy") {	//이 부분 꼭 필요! 
 			var li = e.target.parentNode.parentNode;
+			console.log(li);
 
 			TODOSync.deleted({
 				"key" : li.dataset.key
