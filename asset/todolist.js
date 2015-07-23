@@ -8,22 +8,18 @@ function makeTodo(evt){
 	
 	if((evt.keyCode == ENTER_KEYCODE) && (sTxt != "")){	
 		var newCompleted = eleCompleted.cloneNode(true);
-
 		newCompleted.querySelector(".view label").innerHTML = sTxt;
 		newCompleted.style.display = "block";
-		
 		todoLists.insertAdjacentElement('beforeend', newCompleted);
-/* 		newCompleted.className += " fade-in animation"; */
-	
 		
-/*
-		newCompleted.offsetHeight;
-		newCompleted.style.opacity = 0;
-		newCompleted.style.transition = "opacity 2s";
-		newCompleted.style.opacity = 1;
-*/
-		
+		fadeIn(newCompleted, .5);
 		txtInput.value = "";
+	}
+	
+	function fadeIn(ele, secondTerm){
+		ele.offsetHeight;
+		ele.style.transition = "opacity " + secondTerm + "s ease-in";
+		ele.style.opacity = 1;
 	}
 }
 
@@ -33,26 +29,34 @@ function finishCheckingTodo(evt){
 }
 
 function deleteTodo(evt){
-	var FADEOUT_SPEED = 0.05;
+	var CHANGE_PERIOD = 400;
+	var FADEOUT_SPEED = 1 / CHANGE_PERIOD;//opacity 1 ~ 0 divided by CHANGE_PERIOD
 	
 	if(evt.target.tagName == "BUTTON"){
 		var clickedList = evt.target.parentNode.parentNode;
 		var startOpacity = 1;
+		var startTime = null;
 		
-		var ticktock = function(){
-			startOpacity =  startOpacity - FADEOUT_SPEED;
+		var tickTok = function(timeByTok){
+			if(!startTime) startTime = timeByTok;
+			var interval = timeByTok - startTime;
 			
-			if(startOpacity > 0){
+			startOpacity =  (startOpacity - FADEOUT_SPEED) * interval;
+			
+			if(interval <= CHANGE_PERIOD){
 				clickedList.style.opacity = startOpacity;
-				requestAnimationFrame(ticktock); // || setTimeout(ticktock,17)
-			} else 
-				clickedList.parentNode.removeChild(clickedList);
+				var frame = requestAnimationFrame(tickTok);			
+			} else {
+				clickedList.parentNode.removeChild(clickedList);	
+				cancelAnimationFrame(frame); // 이거 꼭 해줘야 하는지?			
+			}
 		};
-		ticktock();
+		requestAnimationFrame(tickTok);
+
 	}
 }
 
-//
+
 document.addEventListener("DOMContentLoaded", function(evt){
 	txtInput.addEventListener('keypress', makeTodo);
 	todoLists.addEventListener('click', finishCheckingTodo);

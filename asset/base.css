@@ -199,15 +199,14 @@ ul#todo {
 	border-bottom: 1px dotted #ccc;
 /* 	-webkit-transition: opacity 1s; */
 /* 	transition: opacity 1s;*/
-/* 	opacity:0; */
+	opacity: 0;
 }
 
+/*
 #todo-list li.appending{
-/* 	opacity: 0; */
-	-webkit-transition: opacity 3.0s ease-in;
- 	transition: opacity 3.0s ease-in;
- 	opacity:1
+	opacity: 0;
 }
+*/
 
 #todo-list li.deleting{
 	opacity: 0;
