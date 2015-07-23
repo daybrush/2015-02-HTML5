@@ -5,9 +5,13 @@
 		<title>HTML5 Programming - 1 Class</title>
 		<link rel="stylesheet" href="asset/base.css">
 		<script id="todo-template" type="text/x-handlebars-template">
-			<li class="appending">
+			{{#if completed}}
+			<li class="appending completed" data-id="{{id}}">
+			{{else}}
+			<li class="appending" data-id="{{id}}">
+			{{/if}}
 				<div class="view">
-					<input class="toggle" type="checkbox">
+					<input class="toggle" type="checkbox" {{#if completed}}checked {{/if}}>
 					<label>{{todo}}</label>
 					<button class="destroy"></button>
 				</div>
