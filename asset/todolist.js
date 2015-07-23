@@ -8,9 +8,20 @@ function makeTodo(evt){
 	
 	if((evt.keyCode == ENTER_KEYCODE) && (sTxt != "")){	
 		var newCompleted = eleCompleted.cloneNode(true);
+
 		newCompleted.querySelector(".view label").innerHTML = sTxt;
 		newCompleted.style.display = "block";
+		
 		todoLists.insertAdjacentElement('beforeend', newCompleted);
+/* 		newCompleted.className += " fade-in animation"; */
+	
+		
+/*
+		newCompleted.offsetHeight;
+		newCompleted.style.opacity = 0;
+		newCompleted.style.transition = "opacity 2s";
+		newCompleted.style.opacity = 1;
+*/
 		
 		txtInput.value = "";
 	}
@@ -22,22 +33,23 @@ function finishCheckingTodo(evt){
 }
 
 function deleteTodo(evt){
+	var FADEOUT_SPEED = 0.05;
+	
 	if(evt.target.tagName == "BUTTON"){
-		var clickedList = evt.target.parentNode;
-		clickedList.style.opacity = 1;
+		var clickedList = evt.target.parentNode.parentNode;
+		var startOpacity = 1;
 		
 		var ticktock = function(){
-			clickedList.style.opacity = +clickedList.style.opacity - 0.08;
+			startOpacity =  startOpacity - FADEOUT_SPEED;
 			
-			if(+clickedList.style.opacity > 0){
-				(window.requestAnimationFrame && requestAnimationFrame(ticktock)) || setTimeout(ticktock, 				17)
-			}
+			if(startOpacity > 0){
+				clickedList.style.opacity = startOpacity;
+				requestAnimationFrame(ticktock); // || setTimeout(ticktock,17)
+			} else 
+				clickedList.parentNode.removeChild(clickedList);
 		};
-		
 		ticktock();
-		clickedList.parentNode.parentNode.removeChild(clickedList.parentNode);
 	}
-
 }
 
 //
