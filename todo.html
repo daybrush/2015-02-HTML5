@@ -6,14 +6,15 @@
         <link type="text/css" href="todo.css" rel="stylesheet">
     </head>
     <body>
-                
-<!--    todo-list를 입력받는 란                   -->
-        <input id="new-todo" placeholder="What needs to be done?" autofocus>
-                
-<!--    새로 추가되는 list들은 아래에 추가된다.        -->
+        <div id="inputBox">
+            <!-- todo-list를 입력받는 란 -->
+            <input id="new-todo" placeholder="What needs to be done?" autofocus>
+        </div>
+        
+            <!-- 새로 추가되는 list들은 아래에 추가된다. -->
         <ul id="todo-list"></ul>
         
-<!--    template 시작                           -->
+            <!-- template 시작 -->
         <script id="todo-template" type="text/x-handlebars-template">
             {{#newtodo}}
             <li>

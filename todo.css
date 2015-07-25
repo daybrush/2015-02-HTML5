@@ -1,0 +1,17 @@
+#todo-list li{
+    color: darkslategray;
+    font-family: monospace;
+    font-size: 15px;
+    
+    transition-duration: 0.2s;
+}
+
+
+#todo-list .completed{
+    text-decoration: line-through;
+    color: lightgray;
+}
+
+#todo-list .delete{
+    opacity: 0;
+}
