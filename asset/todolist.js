@@ -1,6 +1,13 @@
 // TODO 
 // TODOsync : add, complete 등 data를 전달하는 ajax통신에서 fetch 사용
-
+// TODOsync : 메소드마다 반복되는 if-else문 꼴보기 싫다 
+// localStorage 사용 : 1. setItem에 함수를 넣어서 online시점에 바로 실행되게 하고 싶은데?
+//					--> 안됨. 어차피 실행함수와 콜백 모두 반복되는건데 그걸 계속 넣는것도 이상하고 json은 function type을 지원 안함
+//					2. callback함수가 익명이라 부르기 어려움 
+//					-> 어디에 받아둘 것인가
+//					3. 2의 어려움 때문에 callback함수를 todosync의 then이후에서 하는것은 어떤가?
+// 					--> 별로인듯 그럼 둘을 분리할 필요가 없지 않냐  
+var count = 0;
 var TODO = {
 	ENTER_KEYCODE : 13,
 
@@ -75,7 +82,7 @@ var TODO = {
 		var completed = e.target.checked?'1':'0';
 
 		TODOsync.complete({
-			'key' : $targetLi.data('id'),
+			'id' : $targetLi.data('id'),
 			'completed' : completed 
 		}, function() {
 			$targetLi.toggleClass('completed');
@@ -101,37 +108,60 @@ myHeaders.append('Content-type', 'application/x-www-form-urlencoded;charset=UTF-
 var TODOsync = {
 	URL : 'http://128.199.76.9:8002/byjo/',
 
-	// init : function() {
-	// 	window.addEventListener('online', this.onofflineListener);
-	// 	window.addEventListener('offline', this.onofflineListener);
-	// },
+	init : function() {
+		window.addEventListener('online', this.onofflineListener);
+		window.addEventListener('offline', this.onofflineListener);
+		// 처음에 얘를 한 번 호출해줘야 처음 dom이 로드 되었을 때 on/off 체크 가능 
+		this.onofflineListener();
+	},
 
-	// onofflineListener : function() {
-	// 	//document.getElementById('header').classList[navigator.onLine?'remove':'add']('offline');
-	// 	// if(navigator.onLine) {
-	// 	// 	$('#header').removeClass('offline');
-	// 	// } else {
-	// 	// 	$('#header').addClass('offline');
-	// 	// }
-	// 	// 처음부터 온라인일 때 왜 안됨 ㅠㅠ
-	// 	$('#header')[navigator.onLine?'removeClass':'addClass']('offline');
+	onofflineListener : function() {
+		//document.getElementById('header').classList[navigator.onLine?'remove':'add']('offline');
 
-	// 	if(navigator.onLine) {
-	// 		//sync to server
-	// 	}
-	// },
+		// if(navigator.onLine) {
+		// 	$('#header').removeClass('offline');
+		// } else {
+		// 	$('#header').addClass('offline');
+		// }
+
+		$(header)[navigator.onLine?'removeClass':'addClass']('offline');
+
+		if(navigator.onLine) {
+			//sync to server
+			$.each(localStorage, function(key, value) {
+				var item = JSON.parse(value);
+				if (value.method === 'PUT') {
+					this.add(item.todo, addCallback)
+				}
+				else if (value.method === 'POST') {
+					this.add(item.param, completeCallback)
+
+				}
+				else if (value.method === 'DELETE') {
+					this.add(item.id, removeCallback)
+
+				} else { //'GET'
+					this.get(getCallback);
+				}
+			}.bind(this));
+		}
+	},
 
 	get : function(callback) {
-		fetch(this.URL, {method : 'GET', headers : myHeaders}).then(function(response) {
-			return response.json();
-		}).then(function(response) {
-			callback(response);
-		})
+		if (navigator.onLine) {
+			fetch(this.URL, {method : 'GET', headers : myHeaders}).then(function(response) {
+				return response.json();
+			}).then(function(response) {
+				callback(response);
+			})
+		} else {
+			localStorage.setItem(count, JSON.stringify({'method' : 'GET'}));
+		}
 	},
 
 	add : function(todo, callback) {
 
-		//if (navigator.onLine) {
+		if (navigator.onLine) {
 			$.ajax({
 				method : 'PUT',
 				url : this.URL,
@@ -139,9 +169,32 @@ var TODOsync = {
 			}).done(function(response) {
 				callback(response);
 			});
-		//} else {
-		//	localStorage.
-		//}
+		} else {
+			//arguments.callee() deprecated
+
+			//this.add, callback 함수가 json 변환이 안됨 
+			// Functions are not a valid JSON data type so they will not work. 
+			//Also some objects like Date will be a string after JSON.parse().
+			// 생각해보니 함수들을 다 storage에 넣는 것은 비효율 적인데?
+			// add와 callback은 다 같은거니까 하나씩 다 저장할 필요는 없음 
+			
+			//{'method' : this.add, 'callback' : callback, 'todo' : todo};
+			//localStorage.setItem(count++, JSON.stringify({'method' : 'PUT', 'todo' : todo}));
+			
+			localStorage.setItem(count++, JSON.stringify({'method' : 'PUT', 'todo' : todo}));
+		}
+
+		// get : 아무일도 안하면 됨 
+		// add : todo text를 가지고 있어야 됨 
+		// complete : id, completed
+		// remove : id 
+
+		// localStorage : key-value로 데이터를 저장
+		// key는 autoincrement처럼 생각하고
+		// value를 객체 하나 생성
+		// -> method, id, todo, completed 를 가지고 있는 아이
+
+
 		
 		// 안돼애애애애애 ㅠㅠㅠㅠㅠㅠ
 		// var form = new FormData();
@@ -158,15 +211,15 @@ var TODOsync = {
 	complete : function(param, callback) {
 		$.ajax({
 			method : 'POST',
-			url : this.URL + param.key,
+			url : this.URL + param.id,
 			data : {'completed' : param.completed}
 		}).done(function(response) {
 			callback(response);
 		});
 	},
 
-	remove : function(key, callback) {
-		fetch(this.URL+key, {method : 'DELETE', headers : myHeaders}).then(function(response) {
+	remove : function(id, callback) {
+		fetch(this.URL+id, {method : 'DELETE', headers : myHeaders}).then(function(response) {
 			return response.json();
 		}).then(function(response) {
 			callback(response);
@@ -175,5 +228,5 @@ var TODOsync = {
 	}
 }
 
+TODOsync.init();
 TODO.init();
-//TODOsync.init();
