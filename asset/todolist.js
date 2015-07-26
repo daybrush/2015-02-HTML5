@@ -1,72 +1,69 @@
 /*141005 KwonDaye*/
 
-// 초록색 토글   
-
 var todoSync = {
-	
-	get: function(callback) {
-		var xhr = new XMLHttpRequest();
-		xhr.open("GET", "http://128.199.76.9:8002/FreshFleshFlash", true);
-		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
-		xhr.addEventListener("load", function(e) {
-			callback(JSON.parse(xhr.responseText));
-		});
-		xhr.send();
+	get: function() {
+		$.ajax({
+			url: "http://128.199.76.9:8002/FreshFleshFlash",
+			type: "get",
+			data: {},
+			success: function(data) {
+				todo.init(data);
+			}
+		})
 	},
-	
+
 	add: function(todo, callback) {
-		var xhr = new XMLHttpRequest();
-		xhr.open("PUT", "http://128.199.76.9:8002/FreshFleshFlash", true);
-		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
-		xhr.addEventListener("load", function(e) {
-			callback(JSON.parse(xhr.responseText));
-		});
-		xhr.send("todo=" + todo);
+		$.ajax({
+			url: "http://128.199.76.9:8002/FreshFleshFlash",
+			type: "put",
+			data: {
+				todo: todo
+			},
+			success: function(data) {
+				callback(data);
+			}
+		})
 	},
-	
-	complete: function(param, callback) {
-		var xhr = new XMLHttpRequest();
-		xhr.open("POST", "http://128.199.76.9:8002/FreshFleshFlash/" + param.key, true);
-		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
-		xhr.addEventListener("load", function(e) {
-			callback(JSON.parse(xhr.responseText));
-		});
-		xhr.send("completed=" + param.complete);
+
+	complete:  function(param, callback) {
+		$.ajax({
+			url: "http://128.199.76.9:8002/FreshFleshFlash/" + param.key,
+			type: "post",
+			data: {
+				completed: param.complete
+			},
+			success: function(data) {
+				callback(data);
+			}
+		})
 	},
 	
 	remove: function(param, callback) {
-		var xhr = new XMLHttpRequest();
-		xhr.open("DELETE", "http://128.199.76.9:8002/FreshFleshFlash/" + param.key, true);
-		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
-		xhr.addEventListener("load", function(e) {
-			callback(JSON.parse(xhr.responseText));
-		});
-		xhr.send();
+		$.ajax({
+			url: "http://128.199.76.9:8002/FreshFleshFlash/" + param.key,
+			type: "delete",
+			data: {},
+			success: function(data) {
+				callback(data);
+			}
+		})
 	}
 };
 
 var todo = {
-	
 	KEYCODE_ENTER: 13,
 
-	init: function() {
-		$(document).ready(function() {
-			todoSync.get(function(json) {
-				//console.log(json.length);
-				for(var i = json.length - 1; i >= 0; i--) {
-				//for(var i in json) {
-					var todo = json[i].todo;
-					var className = (json[i].completed == 1) ? "completed" : "";;
-					var li = this.make(todo, json[i].id, className);
+	init: function(data) {
+		for(var i = data.length - 1; i >= 0; i--) {
+			var todo = data[i].todo;
+			var className = (data[i].completed == 1) ? "completed" : "";
+			var li = this.make(todo, data[i].id, className);
+			$("#todo-list").append(li);  //==> for 바깥으로
+		}
 
-					$("#todo-list").append(li);
-				}
-			}.bind(this));
-
-			$("#new-todo").keydown(this.add.bind(this));
-			$("#todo-list").on("click", ".toggle", this.complete.bind(this));	//on을 쓴다면 currentTarget == target이겠지, 항상 
-			$("#todo-list").on("click", ".destroy", this.remove.bind(this));
-		}.bind(this));
+		$("#new-todo").keydown(this.add.bind(this));
+		$("#todo-list").on("click", ".toggle", this.complete.bind(this));	//on을 쓴다면 currentTarget == target이겠지, 항상 
+		$("#todo-list").on("click", ".destroy", this.remove.bind(this));		
 	},
 	
 	make: function(todo, key, className) {
@@ -80,6 +77,7 @@ var todo = {
 	add: function(e) {
 		if(e.keyCode === this.KEYCODE_ENTER) {
 			var todo = $("#new-todo").val();
+
 			todoSync.add(todo, function(json) {
 				var li = this.make(todo, json.insertId, "");
 				$("#todo-list").append(li);
@@ -98,11 +96,11 @@ var todo = {
 			"complete": complete
 		}, function() {
 			if(complete == "1") {
-				li.className = "completed";
 				//$(li).addClass("completed");
+				li.className = "completed";
 			} else {
-				li.className = "";
 				//$(li).addClass("");
+				li.className = "";
 			}	
 		});
 	},
@@ -114,15 +112,14 @@ var todo = {
 			"key": li.dataset.key
 		}, function() {
 			li.className = "deleting";
-			$(li).bind("webkitTransitionEnd", function(e) { 
-				$(this).remove();				//--> 이것도 delegation으로 바깥으로 빼자. 	//$(e.currentTarget).remove();
-			});
+			//$(li).addClass("deleting");
 			$(li).bind("transitionend", function(e) { 
 				$(this).remove();
 			});
 		});
-
 	}
 };
 
-todo.init();
+$(document).ready(function() {
+	todoSync.get();
+});
