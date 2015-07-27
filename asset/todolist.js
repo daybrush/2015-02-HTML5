@@ -1,32 +1,50 @@
 var listnum = 0;
 
+
+
+var TODOSync = {
+	url : "http://128.199.76.9:8002/cca-company",
+	add : function(todo,callback){
+
+		$.ajax({
+			url : this.url,
+			method : "PUT",
+			data : {
+				nickname : "cca-company",
+				todo : todo
+			},
+			dataType: "json"
+		}).done(callback);
+
+	}
+}
+
+
 var TODO = {
+	list : $("#todo-list"),
+	data : null,
+
 	ENTER_KEYCODE : 13,
 	init : function(){
 		$("body").on("keydown","#new-todo", this.add);
 		$("body").on("click", ".toggle", this.complete);
 		$("body").on("click", ".destroy", this.remove);
 	},
-	build : function(){
+	build : function(todo, insertId){
 		// 새 리스트 항목 생성
-		var title = $(this).val();
-		var newList = $("li.sample").clone();
+		var newItem = $("li.sample").clone();
 
-		var data = {"title":title};
-		var source = newList.html();
+		var data = {"title":todo, "insertId":insertId};
+		var source = newItem.prop('outerHTML');
 		var template = Handlebars.compile(source);
-		newList.html(template(data));
+		newItem = $(template(data));
 
-		newList.prependTo($("#todo-list"))
+		newItem.prependTo("#todo-list")
 			.css({opacity:0})
 			.removeClass("sample");
 			
-		newList.animate({opacity:1.0},400);
+		newItem.animate({opacity:1.0},400);
 
-		listnum++;
-			
-		// 폼 초기화
-		$(this).val(null);
 	},
 	complete: function(){
 		var list = $(this).closest("li");
@@ -42,23 +60,14 @@ var TODO = {
 		});
 	},
 	add: function(e){
+		// 여기에서 this.ENTER_KEYCODE를 호출하면 undefined가 뜹니다....왜....?
 		if(e.keyCode == 13){
 			// 새 리스트 항목 생성
-			var title = $(this).val();
-			var newList = $("li.sample").clone();
+			var todo = $(this).val();
 
-			var data = {"title":title};
-			var source = newList.html();
-			var template = Handlebars.compile(source);
-			newList.html(template(data));
-
-			newList.prependTo($("#todo-list"))
-				.css({opacity:0})
-				.removeClass("sample");
-			
-			newList.animate({opacity:1.0},400);
-
-			listnum++;
+			insertId = TODOSync.add(todo, function(data){
+				TODO.build(todo, data.insertId);
+			});
 			
 			// 폼 초기화
 			$(this).val(null);
