@@ -25,13 +25,15 @@
 						</div>
 					</li>
 -->
-					<li class="sample" data-id="{{insertId}}">
-						<div class="view">
-							<input class="toggle" type="checkbox">
-							<label>{{title}}</label>
-							<button class="destroy"></button>
-						</div>
-					</li>
+					<script id="template" type="text/x-handlebars-template">
+						<li {{#if completed}}class="completed"{{/if}} data-id="{{id}}">
+							<div class="view">
+								<input class="toggle" type="checkbox" {{#if completed}}checked="checked"{{/if}}>
+								<label>{{title}}</label>
+								<button class="destroy"></button>
+							</div>
+						</li>
+					</script>
 
 				</ul>
 			</section>
