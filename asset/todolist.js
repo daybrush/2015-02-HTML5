@@ -7,6 +7,22 @@
 //Load이벤트는 페이지가 완전히 로드된 상태를 감지하는데 사용할 수 있다.
 
 var TODOSync = {
+	init : function() {
+		window.addEventListener("online", this.onofflineListener);
+		window.addEventListener("offline", this.onofflineListener);
+	},
+	onofflineListener : function() {
+		// if(navigator.onLine) {
+		// 	document.getElementById("header").classList.remove("offline");
+		// } else {
+		// 	document.getElementById("header").classList.add("offline");
+		// }
+		document.getElementById("header").classList[navigator.onLine?"remove":"add"]("offline");	
+		
+		if(navigator.onLine) {
+			//서버로 sync
+		}
+	},
 	get : function(callback) {
 		var xhr = new XMLHttpRequest();
 		xhr.open("GET", "http://128.199.76.9:8002/atgchan", true);
@@ -30,13 +46,17 @@ var TODOSync = {
 		xhr.send();
 	},
 	add : function(todo, callback) {
-		var xhr = new XMLHttpRequest();
-		xhr.open("PUT", "http://128.199.76.9:8002/atgchan", true);
-		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
-		xhr.addEventListener("load", function(e) {
-			callback(JSON.parse(xhr.responseText));
-		});
-		xhr.send("todo=" + todo);
+		if(navigator.onLine) {
+			var xhr = new XMLHttpRequest();
+			xhr.open("PUT", "http://128.199.76.9:8002/atgchan", true);
+			xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
+			xhr.addEventListener("load", function(e) {
+				callback(JSON.parse(xhr.responseText));
+			});
+			xhr.send("todo=" + todo);
+		} else {
+			//localStorage, indexedDB, websql
+		}
 	},
 	completed : function(param, callback) {
 		var xhr = new XMLHttpRequest();
@@ -60,6 +80,7 @@ var TODOSync = {
 
 var TODO = {
 	ENTER_KEYCODE : 13,
+	selectedIndex : 0,
 	init : function(){
 		TODOSync.get({
 			init : function(){
@@ -67,9 +88,55 @@ var TODO = {
 				//document.addEventListener("load", function(){
 				document.getElementById("new-todo").addEventListener("keydown", this.add.bind(this));
 				//}.bind(this));
+				document.getElementById("filters").addEventListener("click", this.changeStateFilter.bind(this));	
+				window.addEventListener("popstate", this.changeURLFilter.bind(this));
 			}.bind(this),
 			build : this.build.bind(this)
 		});
+	},
+	changeURLFilter : function(e) {
+		if(e.state) {
+			var method = e.state.method;
+			this[method+"View"]();
+		} else {
+			this.allView();
+		}
+	},
+	changeStateFilter : function(e) {
+		var target = e.target;
+		var tagName = target.tagName.toLowerCase();
+		if (tagName == "a") {
+			var href = target.getAttribute("href");
+			if (href == "index.html") {
+				this.allView();
+				history.pushState({"method":"all"}, null, "#/all");
+			} else if (href == "active") {
+				this.activeView();
+				history.pushState({"method":"active"}, null, "#/active");
+			} else if (href == "completed") {
+				this.completedView();
+				history.pushState({"method":"completed"}, null, "#/completed");
+			}
+		}
+		e.preventDefault();
+	},
+	allView : function() {
+		document.getElementById("todo-list").className = "";
+		this.selectNavigator(0);
+	},
+	activeView : function() {
+		document.getElementById("todo-list").className = "all-active";
+		this.selectNavigator(1);
+	},
+	completedView : function() {
+		document.getElementById("todo-list").className = "all-completed";
+		this.selectNavigator(2);
+	},
+	selectNavigator : function(index) {
+		var navigatorList = document.querySelectorAll("#filters a");
+		navigatorList[this.selectedIndex].classList.remove("selected");
+		navigatorList[index].classList.add("selected");
+		this.selectedIndex = index;
 	},
 	build : function(todo, key){
 		if (this.isSupported()) { //템플릿이 지원이 되면
@@ -189,4 +256,5 @@ var TODO = {
 	}
 };
 
+TODOSync.init();
 TODO.init();
