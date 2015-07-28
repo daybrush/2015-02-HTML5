@@ -19,7 +19,39 @@ var Ajax = {
 	}
 }
 
-var TODOSync = {
+var localStorageManager = {
+	storage : window.localStorage,
+	offlineId : window.localStorage['offlineId'] || 0,
+	get : function(callback){
+		var arrReturn = [];
+		for(var i in this.storage) {
+			if(i === "offlineId") continue;
+			arrReturn.push(JSON.parse(this.storage.getItem(i)));
+		}
+		callback(arrReturn);
+	},
+	add : function(sTodo, callback){
+		this.storage.setItem(this.offlineId, JSON.stringify({"id" : this.offlineId, "todo" : sTodo, "completed" : 0})),
+		callback({insertId : this.offlineId});
+		this.storage["offlineId"] = ++this.offlineId;
+	},
+	remove : function(todoId, callback){
+		this.storage.removeItem(todoId);
+		callback({affectedRows: 1});	
+	},
+	completed: function(param, callback){
+		var json = JSON.parse(this.storage.getItem(param.key));
+		if(json.completed == 1) {
+			json.completed = 0;
+		} else {
+			json.completed = 1;
+		}
+		this.storage.setItem(json.id, JSON.stringify(json));
+		callback();
+	}
+}
+
+var TODOOnline = {
 	apiAddress : "http://128.199.76.9:8002",
 	get : function(callback){
 		Ajax.send({
@@ -56,6 +88,52 @@ var TODOSync = {
 	}
 }
 
+var TODOOffline = {
+	get : function(callback){
+		localStorageManager.get(callback);
+	},
+	add : function(sTodo, callback){
+		localStorageManager.add(sTodo, callback);
+		this.offlineId++;
+	},
+	completed : function(param, callback){
+		localStorageManager.completed(param, callback);
+	},
+	remove : function(param, callback){
+		localStorageManager.remove(param.key, callback);
+	}
+}
+
+var TODODataManager = {
+	onOffFunctionSetToUse : false,
+	init : function() {
+		this.onOffFunctionSetToUse = navigator.onLine ? TODOOnline : TODOOffline;
+		window.addEventListener("online", this.onOfflineListener);
+		window.addEventListener("offline", this.onOfflineListener);
+	},
+	onOfflineListener : function(){
+		// if(navigator.online) {
+		// 	document.getElementById("header").classList.remove("offline");
+		// } else {
+		// 	document.getElementById("header").classList.add("offline");
+		// }
+		document.getElementById("header").classList[navigator.onLine?"remove":"add"]("offline");
+		this.onOffFunctionSetToUse = navigator.onLine ? TODOOnline : TODOOffline;
+	},
+	get : function(callback){
+		this.onOffFunctionSetToUse.get(callback);
+	},
+	add : function(sTodo, callback){
+		this.onOffFunctionSetToUse.add(sTodo, callback);
+	},
+	completed : function(param, callback){
+		this.onOffFunctionSetToUse.completed(param, callback);
+	},
+	remove : function(param, callback){
+		this.onOffFunctionSetToUse.remove(param, callback);
+	}
+}
+
 var TODO = {
 	ENTER_KEYCODE : 13, 
 	init : function(){
@@ -65,7 +143,8 @@ var TODO = {
 			document.getElementById("todo-list").addEventListener("click", this.completed);
 			document.getElementById("todo-list").addEventListener("click", this.markRemoveTarget);
 			document.getElementById("todo-list").addEventListener("animationend", this.remove);
-			TODOSync.get(this.displayTodoList.bind(this));
+			document.getElementById("header").classList[navigator.onLine?"remove":"add"]("offline");
+			TODODataManager.get(this.displayTodoList.bind(this));
 		}.bind(this));
 	},
 	displayTodoList : function(arrTodos){
@@ -94,7 +173,7 @@ var TODO = {
 		var checkBtn = target;
 		var li = checkBtn.parentNode.parentNode;
 		var completed = checkBtn.checked ? "1" : "0";
-		TODOSync.completed({
+		TODODataManager.completed({
 			"key" : li.dataset.key,
 			"completed" : completed
 		}, function(){
@@ -119,7 +198,7 @@ var TODO = {
 		var ele = e.target;
 		if(ele.classList.contains("deleteAnimate")){
 			ele.parentNode.removeChild(ele);
-			TODOSync.remove({
+			TODODataManager.remove({
 				"key" : ele.dataset.key
 			}, function(json){
 				if(json.affectedRows !== 1) {
@@ -137,7 +216,7 @@ var TODO = {
 				return;
 			}
 				
-			TODOSync.add(sMsg, function(json){
+			TODODataManager.add(sMsg, function(json){
 				var sTodoEle = this.build(e.target.value, json.insertId);
 				var todoList = document.getElementById("todo-list");
 				todoList.insertAdjacentHTML("beforeend", sTodoEle);
@@ -147,4 +226,5 @@ var TODO = {
 	}
 }
 
+TODODataManager.init();
 TODO.init();

@@ -35,18 +35,21 @@ var TODOSync = {
 var TODO = {
 	ENTER_KEYCODE : 13,
 	init : function() {
+		var todoList = $("#todo-list");
 		$(document).on("keydown", this.add.bind(this));
-		$("#todo-list").on("click", "input.toggle", this.completed);
-		$("#todo-list").on("click", "button.destroy", this.markRemveTarget);
-		$("#todo-list").on("animationend", "li.deleteAnimate", this.remove);	
+		todoList.on("click", "input.toggle", this.completed);
+		todoList.on("click", "button.destroy", this.markRemveTarget);
+		todoList.on("animationend", "li.deleteAnimate", this.remove);	
 		TODOSync.get(this.displayTodoList.bind(this));
 	},
 	displayTodoList : function(arrTodo){
+		var liEles = "";
 		arrTodo.forEach(function(item){
 			var isCompleted = !!item.completed;
 			var sTodoEle = this.build(item.todo, item.id, (isCompleted)?"completed":"", (isCompleted)?"checked":"");
-			$("#todo-list").append(sTodoEle);
+			liEles += sTodoEle;
 		}.bind(this));
+		$("#todo-list").append(liEles);
 	},
 	completed : function(e) {
 		var li = $(e.target).closest("li");
@@ -78,6 +81,7 @@ var TODO = {
 			var sTodoMsg = e.target.value;
 			if(sTodoMsg === ""){
 				alert("missing Todo Message");
+				return;
 			}
 
 			TODOSync.add(sTodoMsg, function(data){
@@ -88,7 +92,7 @@ var TODO = {
 		}
 	}, 
 	build : function(sTodoMessage, nKey, completed, checked){
-		if(sTodoMessage === "") return;
+		if(sTodoMessage === "") return "";
 		var context = {todoMessage : sTodoMessage, key : nKey, completed : completed, checked : checked};
 		var template = Handlebars.compile($("#Todo-template").html());
 		return template(context);
