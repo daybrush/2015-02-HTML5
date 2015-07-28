@@ -17,7 +17,7 @@
             <!-- template 시작 -->
         <script id="todo-template" type="text/x-handlebars-template">
             {{#newtodo}}
-            <li>
+            <li data-key="{{key}}">
                 <div class="view">
                     <input class="toggle" type="checkbox">
                     <label>{{content}}</label>

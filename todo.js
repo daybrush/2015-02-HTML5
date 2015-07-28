@@ -46,35 +46,41 @@ var TODO = {
   init : function () {
     "use strict";
     document.addEventListener("DOMContentLoaded", function () {
-      this.get.bind(this);
       $("#new-todo").keydown(this.add.bind(this));
     }.bind(this));
+    this.get();
+  },
+  
+  build : function(param){
+    var template = $("#todo-template").html();
+    var todoCompile = Handlebars.compile(template);
+
+    var inputTodo = { newtodo : [{
+      key : param.key,
+      content : param.content
+    }] };
+    var todolist = todoCompile(inputTodo);
+
+    return todolist;
   },
   
   get : function(){
     TODOSync.get(function(json){
       console.log(json);
-    })
+      for(var i=0; i<json.length; i++){
+        context = { key : json[i].id, content : json[i].todo};
+        $("#todo-list").append(this.build(context));
+      }
+    }.bind(this))
   },
     
-  add : function(e) {
-    "use strict";
-    var template = $("#todo-template").html();
-    
+  add : function(e) {    
     if (e.keyCode === this.ENTER_KEYCODE) {
       var todo = $("#new-todo").val();
       
       TODOSync.add(todo, function(json){
-        var todoCompile = Handlebars.compile(template);
-
-        var inputTodo = { newtodo : [] };
-        inputTodo.newtodo.push({ content : todo });
-        var todolist = todoCompile(inputTodo);
-        
-        $("#todo-list").prepend(todolist);
-        $("#todo-list li").first().attr("data-key", json.insertId);
-//        .data()가 먹히지 않습니다;;
-        
+        var context = { key : json.insertId, content : todo }
+        $("#todo-list").prepend(this.build(context));
         $("#new-todo").val("");
       }.bind(this));
     }
@@ -87,7 +93,7 @@ var TODO = {
       var completed = input.is(":checked")? 1 : 0;
       
       TODOSync.completed({
-        "key" : li.attr("data-key"),
+        "key" : li.data("key"),
         "completed" : completed
       }, function(){
         li.toggleClass("completed");
@@ -100,7 +106,7 @@ var TODO = {
       var li = button.closest("li");
       
       TODOSync.delete({
-        "key" : li.attr("data-key")
+        "key" : li.data("key")
       }, function(){
         li.addClass("delete");
         li.on("transitionend", function(){
@@ -110,5 +116,4 @@ var TODO = {
   })
 }
 
-TODO.get();
 TODO.init();
