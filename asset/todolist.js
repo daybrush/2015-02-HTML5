@@ -1,60 +1,65 @@
-/*todo
-* innerHTML + = todo 로 처리했던 부분 insertAdjacentHTML 로 바꾸기 // Done
-* 등록한 할 일을 완료 처리하기 //Done
-*  - 이벤트 할당하기
-*  - class추가하기(li에 completed)
-* 삭제하기 
-*  - 이벤트 할당하기
-*  - li을 서서히 사라지게 처리한 후 삭제
-* 등록하기
-*  - 애니메이션 기능을 추가
+/*
+* todo 만들어 객체로 함수 묶기
+* ajax 요청
+	- 전체 가져올 때
+	- 추가할 때
+	- 완료할 때
+	- 삭제할 때
 */
 
 $(document).ready(function () {
-	$("#new-todo").on("keydown", addTodo);
-	$("#todo-list").on("click", "input", completeTodo);
-	$("#todo-list").on("click", "button", startDeleteAnimation);
-	$("#todo-list").on("animationend", "li", deleteTodo);
+	TODO.init();
+});
 
-	function addTodo(ev) {
-		var ENTER_KEYCODE = 13;
-		if(ev.keyCode === ENTER_KEYCODE) {
-			var todo = makeTodoList(ev.target.value);
-			var todoList = document.getElementById("todo-list"); 
-			todoList.insertAdjacentHTML('beforeend', todo);
-			ev.target.value = "";
-		}
-	}
-
+var TODO = (function(){
 	function makeTodoList(todo) {
 		var source = document.getElementById("todo-template").innerHTML;
 		var template = Handlebars.compile(source);
 		var context = {todoTitle: todo};
 		return template(context);
-	}
+	};
 
-	function completeTodo(ev) {
-		var input = ev.currentTarget;
-		var li = input.parentNode.parentNode;
-		if(input.checked === true) {
-			li.className = "completed";
-		}else {
-			li.className = "";
-		}
-	}
+	return TODO = {
+		init: function() {
 
-	function startDeleteAnimation(ev) {
-		var button = ev.currentTarget;
-		var li = button.parentNode.parentNode;
-		li.className = "deleting";
-	}
+			$("#new-todo").on("keydown", TODO.add);
+			var todoList = $("#todo-list");
+			todoList.on("click", "input", TODO.complete);
+			todoList.on("click", "button", TODO.startDeleteAnimation);
+			todoList.on("animationend", "li", TODO.remove);
+		},	
 
-	function deleteTodo(ev) {
-		var li = ev.currentTarget;
-		if(li.className === "deleting"){
-			li.parentNode.removeChild(li);
-		}
-	}
+		add : function (ev) {
+			var ENTER_KEYCODE = 13;
+			if(ev.keyCode === ENTER_KEYCODE) {
+				var todo = makeTodoList(ev.target.value);
+				var todoList = document.getElementById("todo-list"); 
+				todoList.insertAdjacentHTML('beforeend', todo);
+				ev.target.value = "";
+			}
+		},
 
-	
-});
+		complete : function (ev) {
+			var input = ev.currentTarget;
+			var li = input.parentNode.parentNode;
+			if(input.checked === true) {
+				li.className = "completed";
+			}else {
+				li.className = "";
+			}
+		},
+
+		startDeleteAnimation : function (ev) {
+			var button = ev.currentTarget;
+			var li = button.parentNode.parentNode;
+			li.className = "deleting";
+		},
+
+		remove : function (ev) {
+			var li = ev.currentTarget;
+			if(li.className === "deleting"){
+				li.parentNode.removeChild(li);
+			}
+		}	
+	}
+})();
