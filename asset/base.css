@@ -183,6 +183,10 @@ label[for='toggle-all'] {
 	color: #737373;
 }
 
+ul#todo {
+	display: none;	
+}
+
 #todo-list {
 	margin: 0;
 	padding: 0;
@@ -193,13 +197,16 @@ label[for='toggle-all'] {
 	position: relative;
 	font-size: 24px;
 	border-bottom: 1px dotted #ccc;
-	-webkit-transition: opacity 1s;
-	transition: opacity 1s;
+/* 	-webkit-transition: opacity 1s; */
+/* 	transition: opacity 1s;*/
+	opacity: 0;
 }
 
+/*
 #todo-list li.appending{
 	opacity: 0;
 }
+*/
 
 #todo-list li.deleting{
 	opacity: 0;
@@ -256,6 +263,10 @@ label[for='toggle-all'] {
 	text-shadow: 0 1px 0 #669991;
 	bottom: 1px;
 	position: relative;
+}
+/* extra  */
+#todo-list .added{
+	display: none;
 }
 
 #todo-list li label {
@@ -580,4 +591,17 @@ hr {
 		width: 550px;
 		margin: 130px auto 40px auto;
 	}
+}
+
+.animation{
+  animation: fadeIn .2s ease-in 1 forwards;
+}
+
+@keyframes fadeIn {
+from{
+	opacity:0;
+}
+  to {
+    opacity: 1;
+  }
 }

@@ -5,22 +5,21 @@
 		<meta charset="utf-8">
 		<title>HTML5 Programming - 1 Class</title>
 		<link rel="stylesheet" href="asset/base.css">
-		<script type="text/javascript" src="asset/todolist.js"></script>
+<!-- 		<script type="text/javascript" src="asset/todolist.js"></script> -->
 	</head>
 	<body>
 	<div></div>
 		<section id="todoapp">
 			<header id="header">
 				<h1>todos</h1>
-				<input id="new-todo" placeholder="What needs to be done?" autofocus>
+				<input id="new-todo" placeholder="What needs to be done?" autofocus autocomplete>
 			</header>
 			<section id="main">
 				<input id="toggle-all" type="checkbox">
 				<label for="toggle-all">Mark all as complete</label>
 				<ul id="todo-list">
-
-<!-- 
-					#완료했을때
+<!-- 					#완료했을때 -->
+<!--
 					<li class="completed">
 						<div class="view">
 							<input class="toggle" type="checkbox" checked>
@@ -28,17 +27,16 @@
 							<button class="destroy"></button>
 						</div>
 					</li>
-
-					#일반 TODO
-					<li class="{}">
+-->
+										
+<!-- 					#일반 TODO -->
+					<li class="added">
 						<div class="view">
 							<input class="toggle" type="checkbox" {}>
 							<label>타이틀</label>
 							<button class="destroy"></button>
 						</div>
 					</li>
- -->
-
 				</ul>
 			</section>
 			<footer id="footer">
@@ -63,5 +61,15 @@
 			<p>Refactored by <a href="https://github.com/cburgmer">Christoph Burgmer</a></p>
 			<p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
 		</footer>
+		<script type="text/javascript" src="asset/todolist.js"></script>		
 	</body>
 </html>
+
+<!--
+ 
+
+this.get = function(text){
+	return template({});
+}
+return this.get(text);
+-->
