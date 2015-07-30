@@ -7,23 +7,25 @@
 	- 삭제할 때
 */
 var TODOSync = {
-	address: "http://128.199.76.9:8002",
+	address: "http://128.199.76.9:8002/KimDahye",
 
 	get: function(callback) {
-		var param = { method: "GET", url: this.url("/KimDahye"), success: callback, error: this.alertAjaxFail};
-		$.ajax(param);
+		var param = { method: "GET", url: this.address };
+		$.ajax(param).then(callback, this.alertAjaxFail);
 	},
 
-	add: function(todo, callback) {
-		var param = { method: "PUT", url: this.url("/KimDahye"), data: "todo=" + todo, success: callback, error: this.alertAjaxFail};
-		$.ajax(param);
+	add: function(sTodo, callback) {
+		var param = { method: "PUT", url: this.address, data: "todo=" + sTodo };
+		$.ajax(param).then(callback, this.alertAjaxFail);
 	},
 
-	complete: function() {},
+	complete: function(oParam, callback) {
+		var param = { method: "POST", url: this.makeUrl("/"+oParam.todoKey), data: "complete=" + oParam.complete, success}
+	},
 
 	remove: function() {},
 
-	url: function(api) {
+	makeUrl: function(api) {
 		return this.address + api; 
 	},
 
@@ -54,20 +56,20 @@ var TODO = {
 	add : function (ev) {
 		var ENTER_KEYCODE = 13;
 		if(ev.keyCode === ENTER_KEYCODE) {
-			var todo = ev.target.value;
+			var sTodo = ev.target.value;
 			
-			TODOSync.add(todo, function(json) {
-				var todoList = this.makeTodoList(todo);
+			TODOSync.add(sTodo, function(json) {
+				var todoList = this.makeTodoList(sTodo);
 				$("#todo-list").append(todoList);
 				$("#new-todo").val("");
 			}.bind(this));
 		}
 	},
 
-	makeTodoList : function (todo) {
-		var source = document.getElementById("todo-template").innerHTML;
+	makeTodoList : function (sTodo) {
+		var source = $("#todo-template").html();
 		var template = Handlebars.compile(source);
-		var context = {todoTitle: todo};
+		var context = {todoTitle: sTodo};
 		return template(context);
 	},
 
