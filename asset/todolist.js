@@ -57,19 +57,20 @@ var todo = {
 		for(var i = data.length - 1; i >= 0; i--) {
 			var todo = data[i].todo;
 			var className = (data[i].completed == 1) ? "completed" : "";
-			var li = this.make(todo, data[i].id, className);
+			var checked = (data[i].completed == 1) ? "checked" : "";
+			var li = this.make(todo, data[i].id, className, checked);
 			$("#todo-list").append(li);  //==> for 바깥으로
 		}
 
 		$("#new-todo").keydown(this.add.bind(this));
-		$("#todo-list").on("click", ".toggle", this.complete.bind(this));	//on을 쓴다면 currentTarget == target이겠지, 항상 
+		$("#todo-list").on("click", ".toggle", this.complete.bind(this));
 		$("#todo-list").on("click", ".destroy", this.remove.bind(this));		
 	},
 	
-	make: function(todo, key, className) {
+	make: function(todo, key, className, checked) {
 		var source = $("#todo-template").html();
 		var template = Handlebars.compile(source);
-		var context = {doWhat: todo, liId: key, className: className};
+		var context = {doWhat: todo, liId: key, className: className, checked: checked};
 		var html = template(context);
 		return html;
 	},
@@ -96,11 +97,9 @@ var todo = {
 			"complete": complete
 		}, function() {
 			if(complete == "1") {
-				//$(li).addClass("completed");
-				li.className = "completed";
+				$(li).addClass("completed");
 			} else {
-				//$(li).addClass("");
-				li.className = "";
+				$(li).removeClass("completed");
 			}	
 		});
 	},
@@ -111,8 +110,7 @@ var todo = {
 		todoSync.remove({
 			"key": li.dataset.key
 		}, function() {
-			li.className = "deleting";
-			//$(li).addClass("deleting");
+			$(li).addClass("deleting");
 			$(li).bind("transitionend", function(e) { 
 				$(this).remove();
 			});
