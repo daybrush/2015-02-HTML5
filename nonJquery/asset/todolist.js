@@ -108,8 +108,8 @@ var TODODataManager = {
 	onOffFunctionSetToUse : false,
 	init : function() {
 		this.onOffFunctionSetToUse = navigator.onLine ? TODOOnline : TODOOffline;
-		window.addEventListener("online", this.onOfflineListener);
-		window.addEventListener("offline", this.onOfflineListener);
+		window.addEventListener("online", this.onOfflineListener.bind(this));
+		window.addEventListener("offline", this.onOfflineListener.bind(this));
 	},
 	onOfflineListener : function(){
 		// if(navigator.online) {
@@ -119,6 +119,7 @@ var TODODataManager = {
 		// }
 		document.getElementById("header").classList[navigator.onLine?"remove":"add"]("offline");
 		this.onOffFunctionSetToUse = navigator.onLine ? TODOOnline : TODOOffline;
+		this.sync();
 	},
 	get : function(callback){
 		this.onOffFunctionSetToUse.get(callback);
@@ -131,7 +132,29 @@ var TODODataManager = {
 	},
 	remove : function(param, callback){
 		this.onOffFunctionSetToUse.remove(param, callback);
-	}
+	},
+	sync : function(){
+		if(navigator.onLine) {
+			TODOOffline.get(function(arrData){
+				var length = 0;
+				arrData.forEach(function(eachTodo){
+					TODOOnline.add(eachTodo.todo, function(){
+						if(arrData.length <= ++length) {
+							console.log(eachTodo.todo);
+
+							window.localStorage.clear();
+							TODOOnline.get(function(data){
+								document.getElementById("todo-list").innerHTML = "";
+								TODO.displayTodoList(data);
+							});	
+						}
+					});
+				});
+			});
+		} else {
+			
+		}
+	},
 }
 
 var TODO = {
