@@ -26,6 +26,8 @@ var localStorageManager = {
 		var arrReturn = [];
 		for(var i in this.storage) {
 			if(i === "offlineId") continue;
+			if(i === "offTemp") continue;
+			if(i === "offlineStorage") continue;
 			arrReturn.push(JSON.parse(this.storage.getItem(i)));
 		}
 		callback(arrReturn);
@@ -48,6 +50,34 @@ var localStorageManager = {
 		}
 		this.storage.setItem(json.id, JSON.stringify(json));
 		callback();
+	},
+	addWhenOnline: function(sMsg, json){
+		var temp = this.storage.getItem("offTemp");
+		if(!temp) {
+			this.storage["offTemp"] = this._addTodoInJson(sMsg, json);
+		} else {
+			this.storage["offTemp"] = temp + ', ' + this._addTodoInJson(sMsg, json);
+		}
+	},
+	_addTodoInJson: function(sMsg, sJson) {
+		var json = JSON.stringify(sJson);
+		if(sMsg != null) {
+			json = json.replace("\}", "");
+			json = json + ',"todo":' + '"' + sMsg + '"}' ;	
+		}
+		return json;
+	},
+	getOnlineBackUpDataWhenNetworkSwitchedToOffline : function() {
+		return this.storage.getItem("offTemp");
+	},
+	clearOffTemp: function() {
+		this.storage["offTemp"] = "";
+	},
+	setOnlineBackUp: function(list) {
+		this.storage["offlineStorage"] = JSON.stringify(list);
+	},
+	getOnlineBackUp: function() {
+		return this.storage["offlineStorage"];
 	}
 }
 
@@ -137,11 +167,17 @@ var TODODataManager = {
 		if(navigator.onLine) {
 			TODOOffline.get(function(arrData){
 				var length = 0;
+				if(arrData.length == 0) {
+					TODOOnline.get(function(data){
+						document.getElementById("todo-list").innerHTML = "";
+						TODO.displayTodoList(data);
+					});
+					return;
+				}
+
 				arrData.forEach(function(eachTodo){
 					TODOOnline.add(eachTodo.todo, function(){
 						if(arrData.length <= ++length) {
-							console.log(eachTodo.todo);
-
 							window.localStorage.clear();
 							TODOOnline.get(function(data){
 								document.getElementById("todo-list").innerHTML = "";
@@ -152,7 +188,15 @@ var TODODataManager = {
 				});
 			});
 		} else {
-			
+			var list = localStorageManager.getOnlineBackUpDataWhenNetworkSwitchedToOffline();
+			list = list.split(", ");
+			for (var i = list.length - 1; i >= 0; i--) {
+				list[i] = JSON.parse(list[i]);
+			};
+
+			document.getElementById("todo-list").innerHTML = "";
+			TODO.displayTodoList(list);
+			localStorageManager.setOnlineBackUp(list);
 		}
 	},
 }
@@ -168,16 +212,34 @@ var TODO = {
 			document.getElementById("todo-list").addEventListener("animationend", this.remove);
 			document.getElementById("header").classList[navigator.onLine?"remove":"add"]("offline");
 			TODODataManager.get(this.displayTodoList.bind(this));
+			
+			if(!navigator.onLine) {
+				var saved = localStorageManager.getOnlineBackUp()
+				if(!saved) return;
+
+				saved = saved.replace("[","").replace("]","").replace(/},{/g, "}, {");
+				saved = saved.split(", ");
+				for (var i = saved.length - 1; i >= 0; i--) {
+					saved[i] = JSON.parse(saved[i]);
+				};
+				this.displayTodoList(saved, "offline");
+			}
+
 		}.bind(this));
 	},
-	displayTodoList : function(arrTodos){
+	displayTodoList : function(arrTodos, mode){
 		var document = window.document;
+		localStorageManager.clearOffTemp();
 		arrTodos.forEach(function(arr) {
 			var completed = arr.completed == 1 ? "completed" : "";
 			var checked = arr.completed == 1 ? "checked" : "";
 			var sTodoEle = this.build(arr.todo, arr.id, completed, checked);
 			var todoList = document.getElementById("todo-list");
 			todoList.insertAdjacentHTML("beforeend", sTodoEle);
+			
+			if(mode != "offline"){
+				localStorageManager.addWhenOnline(null, arr);
+			}
 		}.bind(this));
 	},
 	build : function(sTodoMessage, nKey, completed, checked) {
@@ -244,6 +306,10 @@ var TODO = {
 				var todoList = document.getElementById("todo-list");
 				todoList.insertAdjacentHTML("beforeend", sTodoEle);
 				e.target.value = "";
+
+				if(navigator.onLine) {
+					localStorageManager.addWhenOnline(sMsg, json);
+				}
 			}.bind(this));
 		}	
 	}
