@@ -1,13 +1,58 @@
 // TODO 
 // TODOsync : add, complete 등 data를 전달하는 ajax통신에서 fetch 사용
 // TODOsync : 메소드마다 반복되는 if-else문 꼴보기 싫다 
-// localStorage 사용 : 1. setItem에 함수를 넣어서 online시점에 바로 실행되게 하고 싶은데?
-//					--> 안됨. 어차피 실행함수와 콜백 모두 반복되는건데 그걸 계속 넣는것도 이상하고 json은 function type을 지원 안함
-//					2. callback함수가 익명이라 부르기 어려움 
-//					-> 어디에 받아둘 것인가
-//					3. 2의 어려움 때문에 callback함수를 todosync의 then이후에서 하는것은 어떤가?
-// 					--> 별로인듯 그럼 둘을 분리할 필요가 없지 않냐  
+
 var count = 0;
+
+var TODOcallback = {
+	init : function() {
+		document.addEventListener('DOMContentLoaded', function(){
+			var source = $('#todo-template').html();
+			this.todoTemplate = Handlebars.compile(source);
+		}.bind(this));
+	},
+
+	initData : function(json) {
+		var tempTodos = [];
+		var tempTodos = json.map(function(element) {
+			var context = {
+				id: element.id,
+				todo: element.todo,
+				completed: element.completed
+			};
+			var todo = this.todoTemplate(context);
+			return todo;
+		}.bind(this)).join("");
+
+		TODO.ulTodoList.append(tempTodos);
+		TODO.appendingAnimate();
+	},
+
+	//context생성 위해선 todo 내용을 넣어줘야함
+	//callback을 분리하면서 바로 접근이 불가능
+	//TODO에서의 sync call은 모두 객체, callback함수로 하고 싶음 
+	//TODOsync에서의 .done은 모두 callback(response)로 통일하고 싶음
+	add : function(json){
+		var context = {
+			id: json.id,
+			todo: this.inputTodo.val()
+		};
+		var todo = $(this.todoTemplate(context));
+
+		TODO.ulTodoList.append(todo);
+		TODO.appendingAnimate();
+	},
+
+	// complete, remove 때도 targetli 문제.
+	complete : function() {
+		$targetLi.toggleClass('completed');
+	},
+
+	remove : function() {
+		$targetLi.addClass('deleting');
+	}
+
+}
 var TODO = {
 	ENTER_KEYCODE : 13,
 
@@ -40,39 +85,24 @@ var TODO = {
 		}.bind(this));
 	},
 
+function(){
+this.inputTodo.on('ley', function(){
+	this.add(aaaa).bind();
+})
 	/*
 	 * initData : 서버에 저장된 데이터 불러오기
 	 */
 	initData : function() {
-		TODOsync.get(function(json) {
-			var tempTodos = [];
-			var tempTodos = json.map(function(element) {
-				var context = {
-					id: element.id,
-					todo: element.todo,
-					completed: element.completed
-				};
-				var todo = this.todoTemplate(context);
-				return todo;
-			}.bind(this)).join("");
-
-			this.ulTodoList.append(tempTodos);
-			this.appendingAnimate();
-		}.bind(this));
+		TODOsync.get(TODOcallback.initData.bind(this));
 	},
 
 	add : function(e) {
 		if (e.keyCode === this.ENTER_KEYCODE) {
-			TODOsync.add(this.inputTodo.val(), function(json){
-				var context = {
-					id: json.id,
-					todo: this.inputTodo.val()
-				};
-				var todo = $(this.todoTemplate(context));
-				this.inputTodo.val('');
-
-				this.ulTodoList.append(todo);
-				this.appendingAnimate();
+			var todo = this.inputTodo.val();
+			this.inputTodo.val('');
+			
+			TODOsync.add(todo, function() {
+				TODOcallback.add(todo).bin
 			}.bind(this));
 		}
 	},
@@ -83,17 +113,14 @@ var TODO = {
 
 		TODOsync.complete({
 			'id' : $targetLi.data('id'),
-			'completed' : completed 
-		}, function() {
-			$targetLi.toggleClass('completed');
-		});
+			'completed' : completed,
+
+		}, TODOcallback.complete);
 	},
 
 	remove : function(e) {
 		$targetLi = $(e.target).closest('li');
-		TODOsync.remove($targetLi.data('id'), function() {
-			$targetLi.addClass('deleting');
-		});
+		TODOsync.remove($targetLi.data('id'), TODOcallback.remove);
 	},
 
 	appendingAnimate : function() {
@@ -111,39 +138,72 @@ var TODOsync = {
 	init : function() {
 		window.addEventListener('online', this.onofflineListener);
 		window.addEventListener('offline', this.onofflineListener);
-		// 처음에 얘를 한 번 호출해줘야 처음 dom이 로드 되었을 때 on/off 체크 가능 
+
 		this.onofflineListener();
+		//this.initDB.bind(this)();
+		// 처음에 얘를 한 번 호출해줘야 처음 dom이 로드 되었을 때 on/off 체크 가능 
+		// setTimeout(function() {
+		// 	console.log("onoff");
+		// 	this.onofflineListener();
+			
+		// }.bind(this), 3000);
+	},
+
+	initDB : function() {
+		var request = indexedDB.open("todoDB", 2);
+		request.onerror = function(e) {
+			console.log("db init failed");
+		};
+
+		request.onsuccess = function(e) {
+			console.log("db on success");
+			this.db = request.result;
+			this.initStore.bind(this)();
+		}.bind(this);
+
+		request.onupgradeneeded = function(e) {
+			console.log("db on upgrade needed");
+			this.db = e.target.result;
+			this.db.createObjectStore('todo', {autoIncrement : true});
+		}.bind(this);
+
+	},
+
+	initStore : function() {
+		var transaction = this.db.transaction(["todo"], "readwrite");
+
+		transaction.oncomplete = function(e) {
+		}.bind(this);
+
+		transaction.onerror = function(e) {
+			console.log("db transaction error");
+		};
+
+		this.store = transaction.objectStore("todo");
+		console.log("set transaction end");
 	},
 
 	onofflineListener : function() {
-		//document.getElementById('header').classList[navigator.onLine?'remove':'add']('offline');
-
-		// if(navigator.onLine) {
-		// 	$('#header').removeClass('offline');
-		// } else {
-		// 	$('#header').addClass('offline');
-		// }
-
 		$(header)[navigator.onLine?'removeClass':'addClass']('offline');
 
 		if(navigator.onLine) {
 			//sync to server
-			$.each(localStorage, function(key, value) {
-				var item = JSON.parse(value);
-				if (value.method === 'PUT') {
-					this.add(item.todo, addCallback)
-				}
-				else if (value.method === 'POST') {
-					this.add(item.param, completeCallback)
+			// $.each(localStorage, function(key, value) {
+			// 	var item = JSON.parse(value);
+			// 	if (value.method === 'PUT') {
+			// 		this.add(item.todo, addCallback)
+			// 	}
+			// 	else if (value.method === 'POST') {
+			// 		this.add(item.param, completeCallback)
 
-				}
-				else if (value.method === 'DELETE') {
-					this.add(item.id, removeCallback)
+			// 	}
+			// 	else if (value.method === 'DELETE') {
+			// 		this.add(item.id, removeCallback)
 
-				} else { //'GET'
-					this.get(getCallback);
-				}
-			}.bind(this));
+			// 	} else { //'GET'
+			// 		this.get(getCallback);
+			// 	}
+			// }.bind(this));
 		}
 	},
 
@@ -155,7 +215,8 @@ var TODOsync = {
 				callback(response);
 			})
 		} else {
-			localStorage.setItem(count, JSON.stringify({'method' : 'GET'}));
+			console.log("dd");
+			this.store.add({'method' : 'GET'});
 		}
 	},
 
@@ -170,17 +231,7 @@ var TODOsync = {
 				callback(response);
 			});
 		} else {
-			//arguments.callee() deprecated
 
-			//this.add, callback 함수가 json 변환이 안됨 
-			// Functions are not a valid JSON data type so they will not work. 
-			//Also some objects like Date will be a string after JSON.parse().
-			// 생각해보니 함수들을 다 storage에 넣는 것은 비효율 적인데?
-			// add와 callback은 다 같은거니까 하나씩 다 저장할 필요는 없음 
-			
-			//{'method' : this.add, 'callback' : callback, 'todo' : todo};
-			//localStorage.setItem(count++, JSON.stringify({'method' : 'PUT', 'todo' : todo}));
-			
 			localStorage.setItem(count++, JSON.stringify({'method' : 'PUT', 'todo' : todo}));
 		}
 
@@ -189,10 +240,7 @@ var TODOsync = {
 		// complete : id, completed
 		// remove : id 
 
-		// localStorage : key-value로 데이터를 저장
-		// key는 autoincrement처럼 생각하고
-		// value를 객체 하나 생성
-		// -> method, id, todo, completed 를 가지고 있는 아이
+
 
 
 		
