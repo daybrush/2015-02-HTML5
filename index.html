@@ -8,9 +8,14 @@
 		<script type="text/javascript" src="asset/todolist.js"></script>
 		<script type="text/javascript" src="asset/handlebars-v3.0.3.js"></script>
 		<script id="todo-template" type="text/x-handlebars-template">
-		 <li class="{}">
+		 {{#if completed}}
+		 <li class="completed" data-todo-key="{{todoKey}}">
+		 <input class="toggle" type="checkbox" checked>
+		 {{else}}
+		 <li class="{}" data-todo-key="{{todoKey}}">
+		 <input class="toggle" type="checkbox">
+		 {{/if}}
 			<div class="view">
-				<input class="toggle" type="checkbox" {}>
 				<label>{{todoTitle}}</label>
 				<button class="destroy"></button>
 			</div>
