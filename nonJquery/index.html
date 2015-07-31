@@ -5,7 +5,7 @@
 		<title>HTML5 Programming - 1 Class</title>
 		<link rel="stylesheet" href="asset/base.css">
 		<script type="text/javascript" src="asset/handlebars-v3.0.3.js"></script>
-		<script type="text/javascript" src="asset/todolist.js"></script>
+		<script type="text/javascript" src="asset/todolist2.js"></script>
 	</head>
 	<body>
 		<section id="todoapp">
@@ -83,7 +83,7 @@
 	-->
 
 	<script id="Todo-template" type="text/x-handlebars-template">
-		<li class="{} {{completed}}" data-key="{{key}}" data-offkey="{{offkey}}">
+		<li class="{{completed}}" data-key="{{key}}" data-sKey="{{sKey}}">
 			<div class="view">
 				<input class="toggle" type="checkbox" {{checked}}>
 				<label>{{todoMessage}}</label>
