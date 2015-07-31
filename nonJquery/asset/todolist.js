@@ -22,20 +22,29 @@ var Ajax = {
 var localStorageManager = {
 	storage : window.localStorage,
 	offlineId : window.localStorage['offlineId'] || 0,
+	displayWhenOffId : window.localStorage['displayWhenOffId'] || 0,
 	get : function(callback){
 		var arrReturn = [];
 		for(var i in this.storage) {
 			if(i === "offlineId") continue;
-			if(i === "offTemp") continue;
-			if(i === "offlineStorage") continue;
+			if(i === "displayWhenOffId") continue;
 			arrReturn.push(JSON.parse(this.storage.getItem(i)));
 		}
 		callback(arrReturn);
 	},
-	add : function(sTodo, callback){
-		this.storage.setItem(this.offlineId, JSON.stringify({"id" : this.offlineId, "todo" : sTodo, "completed" : 0})),
-		callback({insertId : this.offlineId});
-		this.storage["offlineId"] = ++this.offlineId;
+	add : function(sTodo, mode, callback){
+		if(mode === "offline") {
+			this.storage.setItem("writtenOff" + this.offlineId, JSON.stringify({"id" : this.offlineId, "todo" : sTodo, "completed" : 0, "offWrittenData" : true, "displayWhenOffId" : this.displayWhenOffId})),
+			this.storage["offlineId"] = ++this.offlineId;
+		} else {
+			this.storage.setItem("displayWhenOff" + this.displayWhenOffId, JSON.stringify({"id" : this.displayWhenOffId, "todo" : sTodo, "completed" : 0, "offWrittenData" : false})),
+			this.storage["displayWhenOffId"] = ++this.displayWhenOffId;
+		}
+		
+		if(!callback)
+			return;
+
+		callback({insertId : this.offlineId, "displayWhenOffId" : this.offlineId});
 	},
 	remove : function(todoId, callback){
 		this.storage.removeItem(todoId);
@@ -51,33 +60,16 @@ var localStorageManager = {
 		this.storage.setItem(json.id, JSON.stringify(json));
 		callback();
 	},
-	addWhenOnline: function(sMsg, json){
-		var temp = this.storage.getItem("offTemp");
-		if(!temp) {
-			this.storage["offTemp"] = this._addTodoInJson(sMsg, json);
-		} else {
-			this.storage["offTemp"] = temp + ', ' + this._addTodoInJson(sMsg, json);
+	clearOffData: function(){
+		for(var i = 0; i < this.storage['offlineId']; i++) {
+			this.storage.removeItem("writtenOff" + i);
 		}
 	},
-	_addTodoInJson: function(sMsg, sJson) {
-		var json = JSON.stringify(sJson);
-		if(sMsg != null) {
-			json = json.replace("\}", "");
-			json = json + ',"todo":' + '"' + sMsg + '"}' ;	
+	clearDisplayWhenOffData: function(){
+		for(var i = 0; i < this.storage['displayWhenOffId']; i++) {
+			this.storage.removeItem("displayWhenOff" + i);
 		}
-		return json;
-	},
-	getOnlineBackUpDataWhenNetworkSwitchedToOffline : function() {
-		return this.storage.getItem("offTemp");
-	},
-	clearOffTemp: function() {
-		this.storage["offTemp"] = "";
-	},
-	setOnlineBackUp: function(list) {
-		this.storage["offlineStorage"] = JSON.stringify(list);
-	},
-	getOnlineBackUp: function() {
-		return this.storage["offlineStorage"];
+		this.displayWhenOffId = 0;
 	}
 }
 
@@ -90,13 +82,16 @@ var TODOOnline = {
 			callback : callback
 		}); 
 	},
-	add : function(sTodo, callback){
+	add : function(sTodo, callback, mode){
 		Ajax.send({
 			httpMethod : "PUT",
 			url : this.url("/hataeho1"),
 			sParam : "todo="+sTodo,
 			callback : callback
 		}); 
+		if(mode != "sync") {
+			localStorageManager.add(sTodo, "online");
+		}
 	},
 	completed : function(param, callback){
 		Ajax.send({
@@ -123,7 +118,7 @@ var TODOOffline = {
 		localStorageManager.get(callback);
 	},
 	add : function(sTodo, callback){
-		localStorageManager.add(sTodo, callback);
+		localStorageManager.add(sTodo, "offline", callback);
 		this.offlineId++;
 	},
 	completed : function(param, callback){
@@ -167,36 +162,27 @@ var TODODataManager = {
 		if(navigator.onLine) {
 			TODOOffline.get(function(arrData){
 				var length = 0;
-				if(arrData.length == 0) {
-					TODOOnline.get(function(data){
-						document.getElementById("todo-list").innerHTML = "";
-						TODO.displayTodoList(data);
-					});
-					return;
-				}
+				for(var i = 0; i < arrData.length; i++) {
+					var eachTodo = arrData[i];
 
-				arrData.forEach(function(eachTodo){
+					if(!eachTodo.offWrittenData) continue;
+
 					TODOOnline.add(eachTodo.todo, function(){
 						if(arrData.length <= ++length) {
-							window.localStorage.clear();
+
+							// window.localStorage.clear();
+
 							TODOOnline.get(function(data){
 								document.getElementById("todo-list").innerHTML = "";
 								TODO.displayTodoList(data);
 							});	
 						}
-					});
-				});
+					}, "sync");
+				}
+				localStorageManager.clearOffData();
 			});
 		} else {
-			var list = localStorageManager.getOnlineBackUpDataWhenNetworkSwitchedToOffline();
-			list = list.split(", ");
-			for (var i = list.length - 1; i >= 0; i--) {
-				list[i] = JSON.parse(list[i]);
-			};
-
-			document.getElementById("todo-list").innerHTML = "";
-			TODO.displayTodoList(list);
-			localStorageManager.setOnlineBackUp(list);
+			
 		}
 	},
 }
@@ -211,42 +197,39 @@ var TODO = {
 			document.getElementById("todo-list").addEventListener("click", this.markRemoveTarget);
 			document.getElementById("todo-list").addEventListener("animationend", this.remove);
 			document.getElementById("header").classList[navigator.onLine?"remove":"add"]("offline");
-			TODODataManager.get(this.displayTodoList.bind(this));
+		
+			if(navigator.onLine){
+				localStorageManager.clearDisplayWhenOffData();
 			
-			if(!navigator.onLine) {
-				var saved = localStorageManager.getOnlineBackUp()
-				if(!saved) return;
-
-				saved = saved.replace("[","").replace("]","").replace(/},{/g, "}, {");
-				saved = saved.split(", ");
-				for (var i = saved.length - 1; i >= 0; i--) {
-					saved[i] = JSON.parse(saved[i]);
-				};
-				this.displayTodoList(saved, "offline");
+				TODODataManager.get(function(data){
+					for(var i = 0; i < data.length; i++){
+						localStorageManager.add(data[i].todo, null, function(){});
+						// localStorage["displayWhenOff"+i] = JSON.stringify(data[i]);
+					}
+					this.displayTodoList(data);
+				}.bind(this));
+			} else {
+				TODODataManager.get(function(data){
+					this.displayTodoList(data);
+				}.bind(this));
 			}
-
 		}.bind(this));
 	},
-	displayTodoList : function(arrTodos, mode){
+	displayTodoList : function(arrTodos){
 		var document = window.document;
-		localStorageManager.clearOffTemp();
 		arrTodos.forEach(function(arr) {
 			var completed = arr.completed == 1 ? "completed" : "";
 			var checked = arr.completed == 1 ? "checked" : "";
-			var sTodoEle = this.build(arr.todo, arr.id, completed, checked);
+			var sTodoEle = this.build(arr.todo, arr.id, completed, checked, arr.displayWhenOffId);
 			var todoList = document.getElementById("todo-list");
 			todoList.insertAdjacentHTML("beforeend", sTodoEle);
-			
-			if(mode != "offline"){
-				localStorageManager.addWhenOnline(null, arr);
-			}
 		}.bind(this));
 	},
-	build : function(sTodoMessage, nKey, completed, checked) {
+	build : function(sTodoMessage, nKey, completed, checked, displayWhenOffId) {
 		if(sTodoMessage === "") return;
 		
 		var template = Handlebars.compile(document.getElementById("Todo-template").innerHTML);
-		var context = {todoMessage : sTodoMessage, key : nKey, completed : completed, checked : checked};
+		var context = {todoMessage : sTodoMessage, key : nKey, completed : completed, checked : checked, offkey : displayWhenOffId};
 		return template(context);
 	},
 	completed : function(e) {
@@ -302,14 +285,11 @@ var TODO = {
 			}
 				
 			TODODataManager.add(sMsg, function(json){
-				var sTodoEle = this.build(e.target.value, json.insertId);
+				console.log(json.displayWhenOffId);
+				var sTodoEle = this.build(e.target.value, json.insertId, null, null, json.displayWhenOffId);
 				var todoList = document.getElementById("todo-list");
 				todoList.insertAdjacentHTML("beforeend", sTodoEle);
 				e.target.value = "";
-
-				if(navigator.onLine) {
-					localStorageManager.addWhenOnline(sMsg, json);
-				}
 			}.bind(this));
 		}	
 	}
