@@ -197,7 +197,8 @@ var TODOStorageManager = {
 }
 
 var TODO = {
-	ENTER_KEYCODE : 13, 
+	ENTER_KEYCODE : 13,
+	selectedIndex : 0,
 	init : function(){
 		var document = window.document;
 		document.addEventListener("DOMContentLoaded", function(){
@@ -207,7 +208,55 @@ var TODO = {
 			document.getElementById("todo-list").addEventListener("animationend", this.remove);
 			document.getElementById("header").classList[navigator.onLine?"remove":"add"]("offline");
 			this.displayTodoList();
+
+			document.getElementById("filters").addEventListener("click", this.changeStateFilter.bind(this));
+			window.addEventListener("popstate", this.changeURLFilter.bind(this));
 		}.bind(this));
+	},
+	changeURLFilter : function(e){
+		var state = e.state;
+		if(state){
+			var method = state.method;
+			this["display"+method+"View"]();
+		} else {
+			this.displayAllView();
+		}
+	},
+	changeStateFilter : function(e){
+		e.preventDefault();
+		var target = e.target;
+		var tagName = target.tagName.toLowerCase();
+		if(tagName == "a") {
+			var href = target.getAttribute("href");
+			if(href === "index.html") {
+				this.displayAllView();
+				history.pushState({"method":"All"}, null, "index.html");
+			} else if (href === "active") {
+				this.displayActiveView();
+				history.pushState({"method":"Active"}, null, "#/active");
+			} else if (href === "completed") {
+				this.displayCompletedView();
+				history.pushState({"method":"Completed"}, null, "#/completed");
+			}
+		}
+	},
+	displayAllView : function(){
+		document.getElementById("todo-list").className = "";
+		this.selectNavigator(0);
+	},
+	displayActiveView : function(){
+		document.getElementById("todo-list").className = "all-active";
+		this.selectNavigator(1);
+	},
+	displayCompletedView : function(){
+		document.getElementById("todo-list").className = "all-completed";
+		this.selectNavigator(2);
+	},
+	selectNavigator : function(index){
+		var navigatorList = document.querySelectorAll("#filters a");
+		navigatorList[this.selectedIndex].classList.remove("selected");
+		navigatorList[index].classList.add("selected");
+		this.selectedIndex = index;
 	},
 	displayTodoList : function(){
 		var document = window.document;
