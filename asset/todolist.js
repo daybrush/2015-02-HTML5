@@ -1,9 +1,29 @@
 /*141005 KwonDaye*/
 
 var todoSync = {
+	url: "http://128.199.76.9:8002/FreshFleshFlash/",
+
+	init: function() {
+		window.addEventListener("online", this.onofflineListener);
+		window.addEventListener("offline", this.onofflineListener);
+	},
+
+	onofflineListener: function() {
+		// if(navigator.onLine) {
+		// 	document.getElementById("header").classList.remove("offline");
+		// } else {
+		// 	document.getElementById("header").classList.add("offline");
+		// }
+		document.getElementById("header").classList[navigator.onLine ? "remove" : "add"]("offline");
+
+		if(navigator.onLine) {
+			//서버로 싱크 맞추기 
+		}
+	},
+
 	get: function() {
 		$.ajax({
-			url: "http://128.199.76.9:8002/FreshFleshFlash",
+			url: this.url,
 			type: "get",
 			data: {},
 			success: function(data) {
@@ -13,21 +33,25 @@ var todoSync = {
 	},
 
 	add: function(todo, callback) {
-		$.ajax({
-			url: "http://128.199.76.9:8002/FreshFleshFlash",
-			type: "put",
-			data: {
-				todo: todo
-			},
-			success: function(data) {
-				callback(data);
-			}
-		})
+		if(navigator.onLine) {
+			$.ajax({
+				url: this.url,
+				type: "put",
+				data: {
+					todo: todo
+				},
+				success: function(data) {
+					callback(data);
+				}
+			})
+		} else {
+			//data를 클라이언트에 저장 ==> localStorage, indexedDB, websql
+		}
 	},
 
 	complete:  function(param, callback) {
 		$.ajax({
-			url: "http://128.199.76.9:8002/FreshFleshFlash/" + param.key,
+			url: this.url + param.key,
 			type: "post",
 			data: {
 				completed: param.complete
@@ -40,7 +64,7 @@ var todoSync = {
 	
 	remove: function(param, callback) {
 		$.ajax({
-			url: "http://128.199.76.9:8002/FreshFleshFlash/" + param.key,
+			url: this.url + param.key,
 			type: "delete",
 			data: {},
 			success: function(data) {
@@ -53,6 +77,8 @@ var todoSync = {
 var todo = {
 	KEYCODE_ENTER: 13,
 
+	selectedIndex: 0,
+
 	init: function(data) {
 		for(var i = data.length - 1; i >= 0; i--) {
 			var todo = data[i].todo;
@@ -64,7 +90,70 @@ var todo = {
 
 		$("#new-todo").keydown(this.add.bind(this));
 		$("#todo-list").on("click", ".toggle", this.complete.bind(this));
-		$("#todo-list").on("click", ".destroy", this.remove.bind(this));		
+		$("#todo-list").on("click", ".destroy", this.remove.bind(this));	
+
+		document.getElementById("filters").addEventListener("click", this.changeStateFilter.bind(this));	
+		window.addEventListener("popstate", this.changeURLFilter.bind(this));
+	},
+
+	changeURLFilter: function(e) {
+		if(e.state) {
+			var method = e.state.method;
+			// if(method === "all") {
+			// 	this.allView();
+			// } else if(method === "active") {
+			// 	this.activeView();
+			// } else if(method === "completed") {
+			// 	this.completedView();
+			// }
+			this[method + "View"]();
+		} else {
+			this.allView();
+		}
+	},
+
+	changeStateFilter: function(e) {
+		var target = e.target;
+		var tagName = target.tagName.toLowerCase();
+
+		if(tagName == "a") {
+			var href = target.getAttribute("href");
+
+			if(href === "index.html") {
+ 				this.allView();
+ 				history.pushState({"method": "all"}, null, "index.html");
+			} else if(href === "active") {
+				this.activeView();
+				history.pushState({"method": "active"}, null, "active");
+			} else if(href === "completed") {
+				this.completedView();
+				history.pushState({"method": "completed"}, null, "completed");
+			}
+		}
+
+		e.preventDefault();
+	},
+
+	allView: function() {
+		document.getElementById("todo-list").className = "";
+		this.selectNavigator(0);
+	},
+
+	activeView: function() {
+		document.getElementById("todo-list").className = "all-active";
+		this.selectNavigator(1);
+	},
+
+	completedView: function() {
+		document.getElementById("todo-list").className = "all-completed";
+		this.selectNavigator(2);
+	},
+
+	selectNavigator: function(index) {
+		var navigatorList = document.querySelectorAll("#filters a");
+		navigatorList[this.selectedIndex].classList.remove("selected");
+		navigatorList[index].classList.add("selected");
+		this.selectedIndex = index;
 	},
 	
 	make: function(todo, key, className, checked) {
@@ -119,5 +208,6 @@ var todo = {
 };
 
 $(document).ready(function() {
+	todoSync.init();
 	todoSync.get();
 });
