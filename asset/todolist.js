@@ -4,55 +4,6 @@
 
 var count = 0;
 
-var TODOcallback = {
-	init : function() {
-		document.addEventListener('DOMContentLoaded', function(){
-			var source = $('#todo-template').html();
-			this.todoTemplate = Handlebars.compile(source);
-		}.bind(this));
-	},
-
-	initData : function(json) {
-		var tempTodos = [];
-		var tempTodos = json.map(function(element) {
-			var context = {
-				id: element.id,
-				todo: element.todo,
-				completed: element.completed
-			};
-			var todo = this.todoTemplate(context);
-			return todo;
-		}.bind(this)).join("");
-
-		TODO.ulTodoList.append(tempTodos);
-		TODO.appendingAnimate();
-	},
-
-	//context생성 위해선 todo 내용을 넣어줘야함
-	//callback을 분리하면서 바로 접근이 불가능
-	//TODO에서의 sync call은 모두 객체, callback함수로 하고 싶음 
-	//TODOsync에서의 .done은 모두 callback(response)로 통일하고 싶음
-	add : function(json){
-		var context = {
-			id: json.id,
-			todo: this.inputTodo.val()
-		};
-		var todo = $(this.todoTemplate(context));
-
-		TODO.ulTodoList.append(todo);
-		TODO.appendingAnimate();
-	},
-
-	// complete, remove 때도 targetli 문제.
-	complete : function() {
-		$targetLi.toggleClass('completed');
-	},
-
-	remove : function() {
-		$targetLi.addClass('deleting');
-	}
-
-}
 var TODO = {
 	ENTER_KEYCODE : 13,
 
@@ -60,10 +11,11 @@ var TODO = {
 	 * init : variable 선언, event bind
 	 */
 	init : function() {
-		document.addEventListener('DOMContentLoaded', function(){
+		$(document).on('DOMContentLoaded', function(){
 
 			this.inputTodo = $('#new-todo');
 			this.ulTodoList = $('#todo-list');
+			this.filters = $('#filters');
 
 			var source = $('#todo-template').html();
 			this.todoTemplate = Handlebars.compile(source);
@@ -79,30 +31,118 @@ var TODO = {
 			//ul에 걸고 부모를 찾자 
 			this.ulTodoList.on('click', '.toggle', this.complete);
 			this.ulTodoList.on('click', '.destroy', this.remove);
+			this.filters.on('click', 'a', this.changeState.bind(this));
+			$(window).on('popstate', this.changeURL.bind(this));
 
 			this.initData();
 
 		}.bind(this));
 	},
 
-function(){
-this.inputTodo.on('ley', function(){
-	this.add(aaaa).bind();
-})
+	changeURL : function(e) {
+		if (e.originalEvent.state) {
+			var method = e.originalEvent.state.method;
+
+			// object literal 방식으로 변경 
+			if (method === 'all') {
+				this.allView.bind(this)();
+			} else if (method === 'active') {
+				this.activeView.bind(this)();
+			} else if (method === 'completed') {
+				this.completedView.bind(this)();
+			}
+		} else {
+			this.allView.bind(this)();
+		}
+	},
+
+	changeState : function(e) {
+		this.filterTarget = $(e.target);
+		var href = this.filterTarget.attr('href');
+
+		if (href === 'index.html') {
+			this.allView.bind(this)();
+
+			// href만 paramter로 넘겼을 때 
+			// Failed to execute 'pushState' on 'History': 
+			// A history state object with URL '어쩌구저쩌구/2015-02-HTML5/active' 
+			// cannot be created in a document with origin 'null'.
+			// 발생T_T 
+			// -> prefix로 # 붙여 동작은 되는데 url이 좀 이상해짐 
+			// http://stackoverflow.com/questions/20079704/javascript-history-pushstate-not-working
+			history.pushState({'method':'all'}, null, '#'+href);
+			//history.pushState({'method':'all'}, null, href);
+
+		} else if (href === 'active') {
+			this.activeView.bind(this)();
+			history.pushState({'method':'active'}, null, '#'+href);
+			//history.pushState({'method':'active'}, null, href);
+
+		} else if (href === 'completed') {
+			this.completedView.bind(this)();
+			history.pushState({'method':'completed'}, null, '#'+href);
+			//history.pushState({'method':'completed'}, null, href);
+		}
+
+		e.preventDefault();
+	},
+
+	selectedNavigator : function(index) {
+		$('#filters a.selected').removeClass('selected');
+		// target말고 index로 하도록 변경 
+		this.filterTarget.addClass('selected');
+	},
+
+	allView : function() {
+		this.ulTodoList.removeClass();
+		this.selectedNavigator.bind(this)();
+	},
+
+	activeView : function() {
+		this.ulTodoList.removeClass();
+		this.ulTodoList.addClass('all-active');
+		this.selectedNavigator.bind(this)();
+	},
+
+	completedView : function() {
+		this.ulTodoList.removeClass();
+		this.ulTodoList.addClass('all-completed');
+		this.selectedNavigator.bind(this)();
+	},
+
 	/*
 	 * initData : 서버에 저장된 데이터 불러오기
 	 */
 	initData : function() {
-		TODOsync.get(TODOcallback.initData.bind(this));
+		TODOsync.get(function(json) {
+			var tempTodos = [];
+			var tempTodos = json.map(function(element) {
+				var context = {
+					id: element.id,
+					todo: element.todo,
+					completed: element.completed
+				};
+				var todo = this.todoTemplate(context);
+				return todo;
+			}.bind(this)).join("");
+
+			this.ulTodoList.append(tempTodos);
+			this.appendingAnimate();
+		}.bind(this));
 	},
 
 	add : function(e) {
 		if (e.keyCode === this.ENTER_KEYCODE) {
-			var todo = this.inputTodo.val();
-			this.inputTodo.val('');
-			
-			TODOsync.add(todo, function() {
-				TODOcallback.add(todo).bin
+			TODOsync.add(this.inputTodo.val(), function(json){
+				var context = {
+					id: json.id,
+					todo: this.inputTodo.val()
+				};
+				this.inputTodo.val('');
+				var todo = $(this.todoTemplate(context));
+
+				this.ulTodoList.append(todo);
+				this.appendingAnimate();
 			}.bind(this));
 		}
 	},
@@ -114,13 +154,16 @@ this.inputTodo.on('ley', function(){
 		TODOsync.complete({
 			'id' : $targetLi.data('id'),
 			'completed' : completed,
-
-		}, TODOcallback.complete);
+		}, function() {
+			$targetLi.toggleClass('completed');
+		});
 	},
 
 	remove : function(e) {
 		$targetLi = $(e.target).closest('li');
-		TODOsync.remove($targetLi.data('id'), TODOcallback.remove);
+		TODOsync.remove($targetLi.data('id'), function() {
+			$targetLi.addClass('deleting');
+		});
 	},
 
 	appendingAnimate : function() {
@@ -165,7 +208,7 @@ var TODOsync = {
 			console.log("db on upgrade needed");
 			this.db = e.target.result;
 			this.db.createObjectStore('todo', {autoIncrement : true});
-		}.bind(this);
+		}.bind(this);           
 
 	},
 
@@ -235,15 +278,6 @@ var TODOsync = {
 			localStorage.setItem(count++, JSON.stringify({'method' : 'PUT', 'todo' : todo}));
 		}
 
-		// get : 아무일도 안하면 됨 
-		// add : todo text를 가지고 있어야 됨 
-		// complete : id, completed
-		// remove : id 
-
-
-
-
-		
 		// 안돼애애애애애 ㅠㅠㅠㅠㅠㅠ
 		// var form = new FormData();
 		// form.append('todo', todo);
