@@ -1,47 +1,57 @@
 /*
-* todo 만들어 객체로 함수 묶기 //DONE
-* ajax 요청
-	- 전체 가져올 때 //DONE
-	- 추가할 때 // DONE
-	- 완료할 때 // DONE
-	- 삭제할 때 // debugging
+* week 5
+* history 객체 관리하기
+   filters의 a 태그가 눌리면 그 해당 a tag만 selected되고, todo-list 에 클래스네임 바꾸기 - push state!
+   뒤로가기 했을 때, 해당 페이지로 잘 보여줌
 */
-var TODOSync = {
-	address: "http://128.199.76.9:8002/KimDahye",
-
-	get: function(callback) {
-		var param = { method: "GET", url: this.address };
-		$.ajax(param).then(callback, this.alertAjaxFail);
-	},
-
-	add: function(sTodo, callback) {
-		var param = { method: "PUT", url: this.address, data: "todo=" + sTodo };
-		$.ajax(param).then(callback, this.alertAjaxFail);
-	},
-
-	complete: function(oParam, callback) {
-		var param = { method: "POST", url: this.address + "/" + oParam.todoKey, data: "completed=" + oParam.complete };
-		$.ajax(param).then(callback, this.alertAjaxFail);
-	},
-
-	remove: function(oParam, callback) {
-		var param = { method: "DELETE", url: this.address + "/" + oParam.todoKey };
-		$.ajax(param).then(callback, this.alertAjaxFail);
-	},
-
-	alertAjaxFail: function () { 
-		alert("데이터 전송이 실패했습니다. 다시 시도해주세요.");
-	}
-};
 
 var TODO = {
+	elTodoList: null,
+
 	init: function() {
+		this.elTodoList = $("#todo-list");
 		this.get(); //여기에 있으면 반응속도가 너무 느린 것 같다... 한번에 투두가 확 보였으면 좋겠다...
-		$("#new-todo").on("keydown", TODO.add.bind(this));
-		var todoList = $("#todo-list");
-		todoList.on("click", "input", TODO.complete);
-		todoList.on("click", "button", TODO.startDeleteAnimation);
-		todoList.on("animationend", "li", TODO.remove);
+		$("#new-todo").on("keydown", this.add.bind(this));
+		this.elTodoList.on("click", "input", this.complete);
+		this.elTodoList.on("click", "button", this.startDeleteAnimation);
+		this.elTodoList.on("animationend", "li", this.remove);
+
+		$("#filters").on("click", "a", this.changeStateFilter.bind(this));
+		$(window).on("popstate", this.changeURLFilter.bind(this));
+	},
+
+	changeURLFilter: function (ev) {
+		this.changeTodoState(history.state.method);
+	},
+
+	changeStateFilter: function (ev) {
+		ev.preventDefault();
+		var selectedAnchor = $(ev.currentTarget);
+		var href = selectedAnchor.attr("href");
+
+		this.removeClassName("#filters a", "selected");
+		selectedAnchor.addClass("selected");
+		this.changeTodoState(href);
+	
+		// history.pushState({"method": href}, null, href); //에러 발생시킴: Failed to execute 'pushState' on 'History': A history state object with URL 'file:///Users/kimdahye/Workspace/NEXT/2015-02/2015-02-HTML5/active' cannot be created in a document with origin 'null'.
+		history.pushState({"method": href}, null, "#/"+href); //url이 이상하게 붙는다. 마지막 param은 떼고 붙여야 함...
+	},
+
+	changeTodoState: function(href) {
+		var todoList = this.elTodoList;
+		if(href === "index.html") {
+			todoList.removeClass();
+			todoList.addClass("");
+		}else {
+			todoList.removeClass();
+			todoList.addClass("all-" + href);
+		}
+	},
+
+	removeClassName: function(selector) {
+		$.each($(selector), function(i, el) {
+			$(el).removeClass();
+		})
 	},
 
 	get: function() {
@@ -54,27 +64,27 @@ var TODO = {
 		}.bind(this));
 	},	
 
-	add : function (ev) {
+	add: function (ev) {
 		var ENTER_KEYCODE = 13;
 		if(ev.keyCode === ENTER_KEYCODE) {
 			var sTodo = ev.target.value;
 			
 			TODOSync.add(sTodo, function(json) {
-				var todoList = this.makeTodoList({key: json.id, title: sTodo});
-				$("#todo-list").append(todoList);
+				var todoList = this.makeTodoList({key: json.id, title: sTodo}); //TODO.todoList와 이름 겹친다. 바꿀 필요 있음
+				this.elTodoList.append(todoList);
 				$("#new-todo").val("");
 			}.bind(this));
 		}
 	},
 
-	makeTodoList : function (oTodo) {
+	makeTodoList: function (oTodo) {
 		var source = $("#todo-template").html();
 		var template = Handlebars.compile(source);
 		var context = { completed:oTodo.completed, todoKey: oTodo.key, todoTitle: oTodo.title };
 		return template(context);
 	},
 
-	complete : function (ev) {
+	complete: function (ev) {
 		var input = ev.currentTarget;
 		var li = input.parentNode;
 		var oParam = {
@@ -90,7 +100,7 @@ var TODO = {
 		});
 	},
 
-	startDeleteAnimation : function (ev) {
+	startDeleteAnimation: function (ev) {
 		var button = ev.currentTarget;
 		var li = button.parentNode.parentNode;
 		var oParam = {
@@ -101,7 +111,7 @@ var TODO = {
 		});
 	},
 
-	remove : function (ev) {
+	remove: function (ev) {
 		var li = ev.currentTarget;
 		if(li.className === "deleting"){
 			li.parentNode.removeChild(li);
@@ -111,4 +121,5 @@ var TODO = {
 
 $(document).ready(function () {
 	TODO.init();
+	TODOSync.init();
 });
