@@ -3,8 +3,8 @@
 * ajax 요청
 	- 전체 가져올 때 //DONE
 	- 추가할 때 // DONE
-	- 완료할 때
-	- 삭제할 때
+	- 완료할 때 // DONE
+	- 삭제할 때 // debugging
 */
 var TODOSync = {
 	address: "http://128.199.76.9:8002/KimDahye",
@@ -20,14 +20,13 @@ var TODOSync = {
 	},
 
 	complete: function(oParam, callback) {
-		var param = { method: "POST", url: this.makeUrl("/"+oParam.todoKey), data: "completed=" + oParam.complete };
+		var param = { method: "POST", url: this.address + "/" + oParam.todoKey, data: "completed=" + oParam.complete };
 		$.ajax(param).then(callback, this.alertAjaxFail);
 	},
 
-	remove: function() {},
-
-	makeUrl: function(api) {
-		return this.address + api; 
+	remove: function(oParam, callback) {
+		var param = { method: "DELETE", url: this.address + "/" + oParam.todoKey };
+		$.ajax(param).then(callback, this.alertAjaxFail);
 	},
 
 	alertAjaxFail: function () { 
@@ -37,7 +36,7 @@ var TODOSync = {
 
 var TODO = {
 	init: function() {
-		this.get();
+		this.get(); //여기에 있으면 반응속도가 너무 느린 것 같다... 한번에 투두가 확 보였으면 좋겠다...
 		$("#new-todo").on("keydown", TODO.add.bind(this));
 		var todoList = $("#todo-list");
 		todoList.on("click", "input", TODO.complete);
@@ -88,13 +87,18 @@ var TODO = {
 			}else {
 				li.className = "";
 			}
-		})
+		});
 	},
 
 	startDeleteAnimation : function (ev) {
 		var button = ev.currentTarget;
 		var li = button.parentNode.parentNode;
-		li.className = "deleting";
+		var oParam = {
+			todoKey: li.dataset.todoKey
+		};
+		TODOSync.remove(oParam, function() {
+			li.className = "deleting";
+		});
 	},
 
 	remove : function (ev) {
