@@ -22,10 +22,10 @@
             <!-- template 시작 -->
         <script id="todo-template" type="text/x-handlebars-template">
             {{#newtodo}}
-            <li data-key="{{key}}" class="{{isCompleted}}">
+            <li data-key="{{id}}" class="{{isCompleted}}">
                 <div class="view">
-                    <input class="toggle" type="checkbox" {{#if isChecked}}checked{{/if}}>
-                    <label>{{content}}</label>
+                    <input class="toggle" type="checkbox" {{#if completed}}checked{{/if}}>
+                    <label>{{todo}}</label>
                     <button class="destroy"></button>
                 </div>
             </li>
