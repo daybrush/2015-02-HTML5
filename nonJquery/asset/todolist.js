@@ -1,4 +1,4 @@
-/**
+/*
  * Send Ajax Request
  * @param reqParam Parameters required for the Ajax request
  * @param reqParam.httpMethod Select the http method to use for Ajax requests
@@ -13,45 +13,14 @@ var Ajax = {
 		xhr.open(reqParam.httpMethod, reqParam.url, (reqParam.async == undefined) ? true : reqParam.async);
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
 		xhr.addEventListener("load", function(e){
+			if(!reqParam.callback) return;
 			reqParam.callback(JSON.parse(xhr.responseText));
 		});
 		xhr.send(reqParam.sParam);
 	}
 }
 
-var localStorageManager = {
-	storage : window.localStorage,
-	offlineId : window.localStorage['offlineId'] || 0,
-	get : function(callback){
-		var arrReturn = [];
-		for(var i in this.storage) {
-			if(i === "offlineId") continue;
-			arrReturn.push(JSON.parse(this.storage.getItem(i)));
-		}
-		callback(arrReturn);
-	},
-	add : function(sTodo, callback){
-		this.storage.setItem(this.offlineId, JSON.stringify({"id" : this.offlineId, "todo" : sTodo, "completed" : 0})),
-		callback({insertId : this.offlineId});
-		this.storage["offlineId"] = ++this.offlineId;
-	},
-	remove : function(todoId, callback){
-		this.storage.removeItem(todoId);
-		callback({affectedRows: 1});	
-	},
-	completed: function(param, callback){
-		var json = JSON.parse(this.storage.getItem(param.key));
-		if(json.completed == 1) {
-			json.completed = 0;
-		} else {
-			json.completed = 1;
-		}
-		this.storage.setItem(json.id, JSON.stringify(json));
-		callback();
-	}
-}
-
-var TODOOnline = {
+var TODONetworkStorage = {
 	apiAddress : "http://128.199.76.9:8002",
 	get : function(callback){
 		Ajax.send({
@@ -68,48 +37,30 @@ var TODOOnline = {
 			callback : callback
 		}); 
 	},
-	completed : function(param, callback){
+	completed : function(keyIndex, bCompleted){
 		Ajax.send({
 			httpMethod : "POST",
-			url : this.url("/hataeho1/"+param.key),
-			sParam : "completed="+param.completed,
-			callback : callback
+			url : this.url("/hataeho1/"+keyIndex),
+			sParam : "completed="+bCompleted,
 		});
 	},
-	remove : function(param, callback){
+	remove : function(key){
 		Ajax.send({
 			httpMethod : "DELETE",
-			url : this.url("/hataeho1/"+param.key),
-			callback : callback
+			url : this.url("/hataeho1/"+key),
 		});
 	},
 	url : function(sApi) {
 		return this.apiAddress + sApi;
-	}
+	},
 }
 
-var TODOOffline = {
-	get : function(callback){
-		localStorageManager.get(callback);
-	},
-	add : function(sTodo, callback){
-		localStorageManager.add(sTodo, callback);
-		this.offlineId++;
-	},
-	completed : function(param, callback){
-		localStorageManager.completed(param, callback);
-	},
-	remove : function(param, callback){
-		localStorageManager.remove(param.key, callback);
-	}
-}
-
-var TODODataManager = {
-	onOffFunctionSetToUse : false,
+var TODOSyncManager = {
+	localStorage : window.localStorage,
+	networkIsOnline : navigator.onLine,
 	init : function() {
-		this.onOffFunctionSetToUse = navigator.onLine ? TODOOnline : TODOOffline;
-		window.addEventListener("online", this.onOfflineListener);
-		window.addEventListener("offline", this.onOfflineListener);
+		window.addEventListener("online", this.onOfflineListener.bind(this));
+		window.addEventListener("offline", this.onOfflineListener.bind(this));
 	},
 	onOfflineListener : function(){
 		// if(navigator.online) {
@@ -118,71 +69,227 @@ var TODODataManager = {
 		// 	document.getElementById("header").classList.add("offline");
 		// }
 		document.getElementById("header").classList[navigator.onLine?"remove":"add"]("offline");
-		this.onOffFunctionSetToUse = navigator.onLine ? TODOOnline : TODOOffline;
+		this.networkIsOnline = navigator.onLine;
+		this.sync();
 	},
-	get : function(callback){
-		this.onOffFunctionSetToUse.get(callback);
+	sync : function() {
+		if(this.networkIsOnline) {
+			setTimeout(function(){
+				this.syncWhenOnline();
+			}.bind(this), 50);
+		}
+	},
+	syncWhenOnline : function() {
+		var localStorage = window.localStorage;
+		// Step 1 새로 추가된 TODO를 서버에 저장한다
+		var currentKeyIndex = localStorage["keyIndex"]*1;
+		var lastSyncedIndex = (localStorage["syncedLastIndex"] == 0) ? currentKeyIndex*1-2 : localStorage["syncedLastIndex"]*1;
+		for(var idx = lastSyncedIndex+1; idx < currentKeyIndex; idx++) {
+			if(!localStorage[idx]) continue;
+			TODONetworkStorage.add(JSON.parse(localStorage[idx]), function(data){
+				var originalTodo = JSON.parse(localStorage[idx-1]);
+				originalTodo.serverKey = data.insertId;
+				localStorage[idx-1] = JSON.stringify(originalTodo);
+			});
+		}
+		localStorage["syncedLastIndex"] = currentKeyIndex - 1;
+
+		// Step 2 삭제된 TODO를 서버에서 지운다
+		var deleteTargets = localStorage["deletedIndexs"].split(", ");
+		for (var i = 0; i < deleteTargets.length-1; i++) {
+			TODONetworkStorage.remove(deleteTargets[i]);
+		};
+		localStorage["deletedIndexs"] = "";
+
+		// Step 3 완료처리된 TODO의 상태를 서버에서 변경한다
+		var completedTargets = localStorage["completed"].split(",");
+		for (var i = 0; i < completedTargets.length-1; i++) {
+			var keyIndex = completedTargets[i];
+			var serverKey = JSON.parse(localStorage[keyIndex]).serverKey;
+			if(serverKey == -1) continue;
+			TODONetworkStorage.completed(serverKey, 1);
+		};
+		localStorage["completed"] = "";
+
+		// Step 4 비완료로 변경된 TODO의 상태를 서버에서 변경한다
+		var unCompletedTargets = localStorage["unCompleted"].split(",");
+		for (var i = 0; i < unCompletedTargets.length-1; i++) {
+			var keyIndex = unCompletedTargets[i];
+			var serverKey = JSON.parse(localStorage[keyIndex]).serverKey;
+			if(serverKey == -1) continue;
+			TODONetworkStorage.completed(serverKey, 0);
+		};
+		localStorage["unCompleted"] = "";
+	},
+}
+
+var TODOStorageManager = {
+	localStorage: window.localStorage,
+	init : function() {
+		if(!this.localStorage["keyIndex"]) this.localStorage["keyIndex"] = 0;
+		if(!this.localStorage["syncedLastIndex"]) this.localStorage["syncedLastIndex"] = 0;
+		if(!this.localStorage["deletedIndexs"]) this.localStorage["deletedIndexs"] = "";
+		if(!this.localStorage["completed"]) this.localStorage["completed"] = "";
+		if(!this.localStorage["unCompleted"]) this.localStorage["unCompleted"] = "";
+	},
+	getKeyIndex : function(){
+		return this.localStorage["keyIndex"]++;
+	},
+	get : function(){
+		var arrReturn = [];
+		for(var i in this.localStorage) {
+			if(i === "keyIndex") continue;
+			if(i === "syncedLastIndex") continue;
+			if(i === "deletedIndexs") continue;
+			if(i === "completed") continue;
+			if(i === "unCompleted") continue;
+			arrReturn.push(JSON.parse(this.localStorage.getItem(i)));
+		}
+		return arrReturn;
 	},
 	add : function(sTodo, callback){
-		this.onOffFunctionSetToUse.add(sTodo, callback);
+		var keyIndex = this.getKeyIndex();
+		this.localStorage.setItem(keyIndex, JSON.stringify({"keyIndex":keyIndex, "todoMessage":sTodo, "completed":false, "serverKey":-1, "synced":false}));
+		TODOSyncManager.sync();
+		callback({"nKeyIndex":keyIndex, "nServerKey":-1, "sCompleted":"", "sChecked":""});
 	},
-	completed : function(param, callback){
-		this.onOffFunctionSetToUse.completed(param, callback);
+	complete : function(keyIndex, bCompleted){
+		var originalTodo = JSON.parse(this.localStorage.getItem(keyIndex));
+
+		if(bCompleted) {
+			originalTodo.completed = true;
+
+			var arrUnCompleted = this.localStorage["unCompleted"].split(",");
+			var arrKeyIndex = arrUnCompleted.indexOf(keyIndex);
+			if(arrKeyIndex >= 0){
+				arrUnCompleted.splice(arrKeyIndex, 1);
+				this.localStorage["unCompleted"] = arrUnCompleted.join();
+			}
+			
+			this.localStorage["completed"] += keyIndex + ",";
+
+		} else {
+			originalTodo.completed = false;
+
+			var arrCompleted = this.localStorage["completed"].split(",");
+			var arrKeyIndex = arrCompleted.indexOf(keyIndex);
+			if(arrKeyIndex >= 0){
+				arrCompleted.splice(arrKeyIndex, 1);
+				this.localStorage["completed"] = arrCompleted.join();
+			}
+
+			this.localStorage["unCompleted"] += keyIndex + ",";
+		}
+
+		this.localStorage.setItem(keyIndex, JSON.stringify(originalTodo));
+		TODOSyncManager.sync();
 	},
-	remove : function(param, callback){
-		this.onOffFunctionSetToUse.remove(param, callback);
-	}
+	remove : function(keyIndex) {
+		var serverKey = JSON.parse(this.localStorage[keyIndex]).serverKey;
+		this.localStorage.removeItem(keyIndex);
+
+		// 서버에 동기화 된 적 없는 TODO는 굳이 서버로 보내는 TODO 삭제 요청 리스트에 포함시킬필요 없다
+		if(serverKey != -1) {
+			this.localStorage["deletedIndexs"] += serverKey+", ";
+		}
+		TODOSyncManager.sync();
+	},
 }
 
 var TODO = {
-	ENTER_KEYCODE : 13, 
+	ENTER_KEYCODE : 13,
+	selectedIndex : 0,
 	init : function(){
 		var document = window.document;
 		document.addEventListener("DOMContentLoaded", function(){
 			document.getElementById("new-todo").addEventListener("keydown", this.add.bind(this));
-			document.getElementById("todo-list").addEventListener("click", this.completed);
+			document.getElementById("todo-list").addEventListener("click", this.complete);
 			document.getElementById("todo-list").addEventListener("click", this.markRemoveTarget);
 			document.getElementById("todo-list").addEventListener("animationend", this.remove);
 			document.getElementById("header").classList[navigator.onLine?"remove":"add"]("offline");
-			TODODataManager.get(this.displayTodoList.bind(this));
+			this.displayTodoList();
+
+			document.getElementById("filters").addEventListener("click", this.changeStateFilter.bind(this));
+			window.addEventListener("popstate", this.changeURLFilter.bind(this));
 		}.bind(this));
 	},
-	displayTodoList : function(arrTodos){
+	changeURLFilter : function(e){
+		var state = e.state;
+		if(state){
+			var method = state.method;
+			this["display"+method+"View"]();
+		} else {
+			this.displayAllView();
+		}
+	},
+	changeStateFilter : function(e){
+		e.preventDefault();
+		var target = e.target;
+		var tagName = target.tagName.toLowerCase();
+		if(tagName == "a") {
+			var href = target.getAttribute("href");
+			if(href === "index.html") {
+				this.displayAllView();
+				history.pushState({"method":"All"}, null, "index.html");
+			} else if (href === "active") {
+				this.displayActiveView();
+				history.pushState({"method":"Active"}, null, "#/active");
+			} else if (href === "completed") {
+				this.displayCompletedView();
+				history.pushState({"method":"Completed"}, null, "#/completed");
+			}
+		}
+	},
+	displayAllView : function(){
+		document.getElementById("todo-list").className = "";
+		this.selectNavigator(0);
+	},
+	displayActiveView : function(){
+		document.getElementById("todo-list").className = "all-active";
+		this.selectNavigator(1);
+	},
+	displayCompletedView : function(){
+		document.getElementById("todo-list").className = "all-completed";
+		this.selectNavigator(2);
+	},
+	selectNavigator : function(index){
+		var navigatorList = document.querySelectorAll("#filters a");
+		navigatorList[this.selectedIndex].classList.remove("selected");
+		navigatorList[index].classList.add("selected");
+		this.selectedIndex = index;
+	},
+	displayTodoList : function(){
 		var document = window.document;
+		var arrTodos = TODOStorageManager.get();
+
 		arrTodos.forEach(function(arr) {
-			var completed = arr.completed == 1 ? "completed" : "";
-			var checked = arr.completed == 1 ? "checked" : "";
-			var sTodoEle = this.build(arr.todo, arr.id, completed, checked);
+			var completed = arr.completed ? "completed" : "";
+			var checked = arr.completed ? "checked" : "";
+			var sTodoEle = this.build(arr.todoMessage, arr.keyIndex, arr.serverKey, completed, checked);
 			var todoList = document.getElementById("todo-list");
 			todoList.insertAdjacentHTML("beforeend", sTodoEle);
 		}.bind(this));
 	},
-	build : function(sTodoMessage, nKey, completed, checked) {
+	build : function(sTodoMessage, nKeyIndex, nServerKey, sCompleted, sChecked) {
 		if(sTodoMessage === "") return;
-		
 		var template = Handlebars.compile(document.getElementById("Todo-template").innerHTML);
-		var context = {todoMessage : sTodoMessage, key : nKey, completed : completed, checked : checked};
+		var context = {todoMessage : sTodoMessage, key : nKeyIndex, sKey : nServerKey, completed : sCompleted, checked : sChecked};
 		return template(context);
 	},
-	completed : function(e) {
-		var target = e.target;
-		if(target.nodeName !== "INPUT" || target.className !== "toggle") {
+	complete : function(e) {
+		var checkBtn = e.target;
+		if(checkBtn.nodeName !== "INPUT" || checkBtn.className !== "toggle") {
 			return;
 		}
 
-		var checkBtn = target;
 		var li = checkBtn.parentNode.parentNode;
-		var completed = checkBtn.checked ? "1" : "0";
-		TODODataManager.completed({
-			"key" : li.dataset.key,
-			"completed" : completed
-		}, function(){
-			if(checkBtn.checked) {
-				li.classList.add("completed");
-			} else {
-				li.classList.remove("completed");
-			}
-		});
+		TODOStorageManager.complete(li.dataset.key, checkBtn.checked);
+
+		if(checkBtn.checked) {
+			li.classList.add("completed");
+		} else {
+			li.classList.remove("completed");
+		}
 	},
 	markRemoveTarget : function(e) {
 		var target = e.target;
@@ -198,14 +305,7 @@ var TODO = {
 		var ele = e.target;
 		if(ele.classList.contains("deleteAnimate")){
 			ele.parentNode.removeChild(ele);
-			TODODataManager.remove({
-				"key" : ele.dataset.key
-			}, function(json){
-				if(json.affectedRows !== 1) {
-					alert("Transient error has occurred. Please try again later");
-					location.reload();
-				}
-			})
+			TODOStorageManager.remove(ele.dataset.key);
 		}	
 	},
 	add : function(e) {
@@ -215,9 +315,9 @@ var TODO = {
 				alert("missing Todo Message");
 				return;
 			}
-				
-			TODODataManager.add(sMsg, function(json){
-				var sTodoEle = this.build(e.target.value, json.insertId);
+
+			TODOStorageManager.add(sMsg, function(data){
+				var sTodoEle = this.build(e.target.value, data.nKeyIndex, data.nServerKey, data.sCompleted, data.sChecked);
 				var todoList = document.getElementById("todo-list");
 				todoList.insertAdjacentHTML("beforeend", sTodoEle);
 				e.target.value = "";
@@ -226,5 +326,6 @@ var TODO = {
 	}
 }
 
-TODODataManager.init();
+TODOSyncManager.init();
+TODOStorageManager.init();
 TODO.init();
