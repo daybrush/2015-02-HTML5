@@ -18,10 +18,11 @@ var TODO = {
 
 		$("#filters").on("click", "a", this.changeStateFilter.bind(this));
 		$(window).on("popstate", this.changeURLFilter.bind(this));
+		//popstate 가 발생하면, history의 top을 빼는 건가? 아니면 top을 빼지않고 top을 반환한 뒤, top = top-1 로 하는 건가? '앞으로' 가 가능한 걸 보면 후자인 것 같다...
 	},
 
 	changeURLFilter: function (ev) {
-		this.changeTodoState(history.state.method);
+		this.changeTodoState(history.state === null? "index.html" : history.state.method);
 	},
 
 	changeStateFilter: function (ev) {
@@ -29,7 +30,7 @@ var TODO = {
 		var selectedAnchor = $(ev.currentTarget);
 		var href = selectedAnchor.attr("href");
 
-		this.removeClassName("#filters a", "selected");
+		this.removeClassName("#filters a");
 		selectedAnchor.addClass("selected");
 		this.changeTodoState(href);
 	
@@ -39,13 +40,8 @@ var TODO = {
 
 	changeTodoState: function(href) {
 		var todoList = this.elTodoList;
-		if(href === "index.html") {
-			todoList.removeClass();
-			todoList.addClass("");
-		}else {
-			todoList.removeClass();
-			todoList.addClass("all-" + href);
-		}
+		todoList.removeClass();
+		todoList.addClass(href === "index.html"? "" : "all-" + href);
 	},
 
 	removeClassName: function(selector) {
@@ -92,11 +88,7 @@ var TODO = {
 			complete: input.checked? 1 : 0
 		}
 		TODOSync.complete(oParam, function(json){
-			if(oParam.complete === 1) {
-				li.className = "completed";
-			}else {
-				li.className = "";
-			}
+			li.className = (oParam.complete === 1)? "completed" : ""; //$(li)를 쓰면, 이게 removeClass한번 하고, addClass 한번하고 이렇게 두줄로 바뀌게 되는 건가?
 		});
 	},
 
