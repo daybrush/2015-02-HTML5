@@ -6,15 +6,26 @@
 		<link rel="stylesheet" href="asset/base.css">
 		<script type="text/javascript" src="lib/jquery.min.js"></script>
 		<script type="text/javascript" src="lib/handlebars-v3.0.3.js"></script>
-		<script type="text/javascript" src="asset/todolist.js"></script>
+		<!-- <script type="text/javascript" src="asset/todolist.js"></script> -->
+		<script type="text/javascript" src="asset/todolist-jq.js"></script>
 		<script id="entry-template" type="text/x-handlerbars-template">
-			<li class="appending">
+			{{#if completed}}
+			<li data-key="{{key}}" class="appending completed">
+				<div class="view">
+					<input class="toggle" type="checkbox" checked>
+					<label>{{target}}</label>
+					<button class="destroy"></button>
+				</div>
+			</li>			
+			{{else}}
+			<li data-key="{{key}}" class="appending">
 				<div class="view">
 					<input class="toggle" type="checkbox">
 					<label>{{target}}</label>
 					<button class="destroy"></button>
 				</div>
 			</li>
+			{{/if}}
 		</script>
 	</head>
 	<body>
