@@ -1,33 +1,23 @@
 /*
-onLine, offLine 이벤트를 할당하고
+online, offline 이벤트를 할당하고
 offline일때 header엘리먼트에 offline클래스를 추가하고
 online일때 header엘리먼트에 offlien클래스를 삭제하기
-
-#todo-list엘리먼트에 active(/completed)엘리먼트를 누르면
-- ul에 all-active나 all-completed(/completed) 추가하기
-- 밑에 selected클래스를 탭클릭때마다 달아주기 (기존거에선 삭제 )
-
-동적으로 UI변경후 히스토리 추가(history.pushState({"method":"complete"}, null, "active"))
-뒤로가기 할 때 이벤트 받아서 변경 window.addEventListener("popstate", callback)
-
-수업시간에 할거
-Service worker(구 application cache)
-indexedDB(or localStorage)
-navigator.connection
 */
 var TODOSync = {
     url: "http://128.199.76.9:8002/milooy",
     contentType: "application/x-www-form-urlencoded; charset=UTF-8",
     init: function() {
-        window.addEventListener('onLine', this.onofflineListener);
-        window.addEventListener('offLine', this.onofflineListener);
+        window.addEventListener('online', this.onofflineListener);
+        window.addEventListener('offline', this.onofflineListener);
     },
     onofflineListener: function() {
-        document.getElementById("header").classList[navigator.onLine? "remove" : "add"] ("offLine");
-
-        if(navigator.onLine) {
-            //서버로 sync맞추기
+        if(navigator.online) {
+            document.getElementById("header").classList.remove('offline');
+        } else {
+            document.getElementById("header").classList.add('online');
         }
+        document.getElementById("header").classList[navigator.online? "remove" : "add"] ("offline")
+
     },
     get: function(callback) {
         $.ajax({
@@ -40,18 +30,14 @@ var TODOSync = {
         });
     },
     add: function(todo, callback) {
-        if(navigator.onLine) {
-            $.ajax({
-                type: "PUT",
-                url: this.url,
-                data: { todo: todo },
-                contentType: this.contentType,
-            }).done(function(data){
-                callback(data);
-            });
-        } else {
-            //data를 클라에 저장 -> localstorage, indexdDB, webSQL
-        }
+        $.ajax({
+            type: "PUT",
+            url: this.url,
+            data: { todo: todo },
+            contentType: this.contentType,
+        }).done(function(data){
+            callback(data);
+        });
     },
     completed: function(param, callback) {
         $.ajax({
@@ -77,63 +63,12 @@ var TODOSync = {
 
 var TODO = {
     ENTER_KEYCODE: 13,
-    selectedIndex: 0,
     init: function() { //즉시실행함수 삭제함
         this.initTODO();
         $('#new-todo').keydown(this.add.bind(this));
         $('#todo-list').on( "click", '.toggle', this.completed)
         .on( "click", '.destroy', this.remove);
-        $('#filters').on('click', this.changeStateFilter.bind(this));
-        window.addEventListener("popstate", this.changeURLFilter.bind(this));
 
-    },
-    changeURLFilter: function(e) {
-        if(e.state){
-            var method = e.state.method;
-            this[method+"View"]();
-        } else {
-            this.allView();
-        }
-    },
-    changeStateFilter: function(e) {
-        var target = e.target;
-        var tagName = e.target.tagName.toLowerCase();
-        if(tagName == 'a') {
-            var href = target.getAttribute('href');
-            console.log(href);
-            if(href === "index.html"){
-                this.allView();
-                history.pushState({"method":"all"}, null, "index.html");
-            } else if(href === "active") {
-                this.activeView();
-            history.pushState({"method":"active"}, null, "#/active");
-            } else if(href === "completed"){
-                this.completedView();
-                history.pushState({"method":"completed"}, null, "#/completed");
-            }
-        }
-        e.preventDefault();
-    },
-    allView: function() {
-        document.getElementById("todo-list").className = "";
-        this.selectNavigator(0);
-
-    },
-    activeView: function() {
-        document.getElementById("todo-list").className = "all-active";
-        this.selectNavigator(1);
-
-    },
-    completedView: function() {
-        document.getElementById("todo-list").className = "all-completed";
-        this.selectNavigator(2);
-
-    },
-    selectNavigator: function(index) {
-        var navigatorList = document.querySelectorAll('#filters a');
-        navigatorList[this.selectedIndex].classList.remove('selected');
-        navigatorList[index].classList.add('selected');
-        this.selectedIndex = index;
     },
     completed: function(e){
         var completed = $(this).closest('li').hasClass('completed')? '0' : '1';
