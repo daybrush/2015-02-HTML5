@@ -1,3 +1,11 @@
+#new-todo{
+    width: 200px;
+    height: 20px;
+    font-size: 15px;
+    font-family: monospace;
+    border-radius: 5px;
+}
+
 #todo-list li{
     color: darkslategray;
     font-family: monospace;
@@ -6,12 +14,58 @@
     transition-duration: 0.2s;
 }
 
+#todo-list.all-active > .completed{
+    display: none;
+}
 
-#todo-list .completed{
+#todo-list.all-completed > li:not(.completed) {
+    display: none;
+}
+
+#todo-list li.completed{
     text-decoration: line-through;
     color: lightgray;
 }
 
-#todo-list .delete{
+#todo-list li.delete{
     opacity: 0;
+}
+
+
+#filters{
+    display: inline-block;
+    text-align: center;
+    width: 200px;
+    padding-left: 0;
+}
+#filters li{
+    font-size: 15px;
+    color: gray;
+    list-style: none;
+    display: inline-block;
+}
+#filters li a.selected{
+    font-weight: 800;
+}
+#filters li::after{
+    vertical-align: middle;
+    content: " | ";
+    font-size: 12px;
+}
+#filters li:last-child::after{
+    content: "";
+}
+
+a{
+    text-decoration: none;
+}
+a:link {
+    color: gray;
+}
+a:visited {
+    color: gray;
+}
+a:hover {
+    color: dimgray;
+    font-weight: 800;
 }

@@ -6,28 +6,33 @@
         <link type="text/css" href="todo.css" rel="stylesheet">
     </head>
     <body>
-        <div id="inputBox">
+        <header id="header">
             <!-- todo-list를 입력받는 란 -->
             <input id="new-todo" placeholder="What needs to be done?" autofocus>
-        </div>
+        </header>
         
             <!-- 새로 추가되는 list들은 아래에 추가된다. -->
         <ul id="todo-list"></ul>
         
+        <ul id="filters">
+            <li class="btn"><a href="todo.html" class="selected">All</a></li>
+            <li class="btn"><a href="active">Active</a></li>
+            <li class="btn"><a href="completed">Completed</a></li>
+        </ul>
             <!-- template 시작 -->
         <script id="todo-template" type="text/x-handlebars-template">
             {{#newtodo}}
-            <li data-key="{{key}}">
+            <li data-key="{{key}}" class="{{isCompleted}}">
                 <div class="view">
-                    <input class="toggle" type="checkbox">
+                    <input class="toggle" type="checkbox" {{#if isChecked}}checked{{/if}}>
                     <label>{{content}}</label>
                     <button class="destroy"></button>
                 </div>
             </li>
             {{/newtodo}}
         </script>
-<!--    template 끝                             -->
-        
+        <!-- template 끝 -->
+
         <script src="handlebars-v3.0.3.js"></script>
         <script src="jquery-1.11.3.js"></script>
         <script type="text/javascript" src="todo.js"></script>
