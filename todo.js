@@ -5,17 +5,6 @@ var TODOLocalStorage = {
   local : window.localStorage,
   localContextArray : [],
   
-//  init : function() {
-//    var contextArray = [];
-//
-//    for(key in this.local){
-//      var context = JSON.parse(this.local.getItem(key));
-//      contextArray.push(context);
-//    }
-//    
-//    return contextArray;
-//  },
-  
   clearLocal : function(){
     console.log("%c Clear local storage :", logStyle);
     this.local.clear();
@@ -35,8 +24,8 @@ var TODOLocalStorage = {
     console.log("%ccomplete adjust to localStorage", logStyle);
     
     var completedTodo = JSON.parse(this.local.getItem(param.key));
-    completedTodo.isCompleted = param.completed;
-    completedTodo.completed = (param.completed === 1)?true:false;
+    completedTodo.isCompleted = param.completed === 1?"completed":"";
+    completedTodo.completed = param.completed;
     this.local.setItem(param.key, JSON.stringify(completedTodo));
     
   },
@@ -72,6 +61,8 @@ var TODOSync = {
       $("#header").removeClass("offline");
 //      서버로 Sync
       
+      
+      
     }else{
       $("#header").addClass("offline");
     }
@@ -89,11 +80,9 @@ var TODOSync = {
       });
       xhr.send("todo=" + todo);
       
-//      오프라인일 때!!!!
     }else{
-//      data를 localStorage에 저장
       
-      var localresponseText = { insertId : "local:"+TODOLocalStorage.local.length };
+      var localresponseText = { insertId : "local_"+TODOLocalStorage.local.length };
       console.log(localresponseText);
       callback(localresponseText);
       console.log(TODOLocalStorage.local);
@@ -142,13 +131,18 @@ var TODOSync = {
   
   
   delete : function(param, callback){
-    var xhr = new XMLHttpRequest();
-    xhr.open('DELETE', this.URL+param.key, true);
-    xhr.setRequestHeader("content-type", "application/x-www-form-urlencoded;charset=UTF-8");
-    xhr.addEventListener("load", function(e){
-      callback(JSON.parse(xhr.responseText));
-    });
-    xhr.send("delete=" + param.key); 
+    
+    if(navigator.onLine){
+        var xhr = new XMLHttpRequest();
+      xhr.open('DELETE', this.URL+param.key, true);
+      xhr.setRequestHeader("content-type", "application/x-www-form-urlencoded;charset=UTF-8");
+      xhr.addEventListener("load", function(e){
+        callback(JSON.parse(xhr.responseText));
+      });
+      xhr.send("delete=" + param.key); 
+    }else{
+      callback();
+    }
   }
 }
 
@@ -241,7 +235,7 @@ var TODO = {
       
       var contextArray = [];      
       for(var i=0; i<json.length; i++){
-        var isCompleted = (json[i].completed === true)?"completed" : '';
+        var isCompleted = (json[i].completed === 1)?"completed" : '';
         context = { 
           id : json[i].id, 
           isCompleted : isCompleted,
@@ -259,7 +253,7 @@ var TODO = {
       var todo = $("#new-todo").val();
       
       TODOSync.add(todo, function(json){
-        var context = { id : json.insertId, isCompleted : '', completed : false, todo : todo };
+        var context = { id : json.insertId, isCompleted : '', completed : 0, todo : todo };
         TODOLocalStorage.addLocal(context);
         var context_fix = [context];
         $("#todo-list").prepend(this.build(context));
