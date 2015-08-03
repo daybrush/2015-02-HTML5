@@ -1,35 +1,64 @@
 /*141005 KwonDaye*/
 
-var todoSync = {
-	url: "http://128.199.76.9:8002/FreshFleshFlash/",
+var id = 0;
 
-	init: function() {
-		window.addEventListener("online", this.onofflineListener);
-		window.addEventListener("offline", this.onofflineListener);
+var dataArr = [];
+
+var todoSync = {
+	url: "http://128.199.76.9:8002/FreshFleshFlash/", 
+
+	init: function() {		
+		document.getElementById("header").classList[navigator.onLine ? "remove" : "add"]("offline");
+
+		window.addEventListener("online", this.onofflineListener());
+		window.addEventListener("offline", this.onofflineListener());
 	},
 
 	onofflineListener: function() {
-		// if(navigator.onLine) {
-		// 	document.getElementById("header").classList.remove("offline");
-		// } else {
-		// 	document.getElementById("header").classList.add("offline");
-		// }
 		document.getElementById("header").classList[navigator.onLine ? "remove" : "add"]("offline");
 
 		if(navigator.onLine) {
-			//서버로 싱크 맞추기 
+			//서버로 싱크 맞추기
+
+		} 
+	},
+
+	makeArr: function() {
+		for(var i = 0; i < 10; i++) {
+			var retrievedItem = JSON.parse(localStorage.getItem("dataObject" + i));
+
+			if(!retrievedItem) {
+				continue;
+			}
+
+			dataArr.push(retrievedItem);
 		}
 	},
 
 	get: function() {
-		$.ajax({
-			url: this.url,
-			type: "get",
-			data: {},
-			success: function(data) {
-				todo.init(data);
-			}
-		})
+		if(navigator.onLine) {
+			$.ajax({
+				url: this.url,
+				type: "get",
+				data: {},
+				success: function(data) {
+					todo.init(data);
+				}
+			})
+		} else {
+			// var retrievedItem = localStorage.getItem("dataArr");
+			// todo.init(JSON.parse(retrievedItem));
+			// for(var i = 0; i < 10; i++) {
+			// 	var retrievedItem = JSON.parse(localStorage.getItem("dataObject" + i));
+			// 	if(!retrievedItem) {
+			// 		console.log("continue!");
+			// 		continue;
+			// 	}
+			// 	dataArr.push(retrievedItem);
+			// }
+			this.makeArr();
+			todo.init(dataArr);
+		}
 	},
 
 	add: function(todo, callback) {
@@ -46,31 +75,52 @@ var todoSync = {
 			})
 		} else {
 			//data를 클라이언트에 저장 ==> localStorage, indexedDB, websql
+			// dataArr[id] = {"insertId": id, "id": id, "todo": todo, "completed": 0};
+			// localStorage.setItem("dataArr", JSON.stringify(dataArr));
+			// callback(dataArr[id]);
+			// id++;
+
+			var dataObject = {"insertId": id, "id": id, "todo": todo, "completed": 0};
+			localStorage.setItem("dataObject" + id, JSON.stringify(dataObject));
+			callback(dataObject);
+			id++;
 		}
 	},
 
-	complete:  function(param, callback) {
-		$.ajax({
-			url: this.url + param.key,
-			type: "post",
-			data: {
-				completed: param.complete
-			},
-			success: function(data) {
-				callback(data);
-			}
-		})
+	complete: function(param, callback) {
+		if(navigator.onLine) {
+			$.ajax({
+				url: this.url + param.key,
+				type: "post",
+				data: {
+					completed: param.complete
+				},
+				success: function(data) {
+					callback();
+				}
+			})
+		} else {
+			var todo = JSON.parse(localStorage.getItem("dataObject" + param.key)).todo;
+			var dataObject = {"insertId": param.key, "id": param.key, "todo": todo, "completed": param.complete};
+			localStorage.setItem("dataObject" + param.key, JSON.stringify(dataObject));
+			callback();
+		}
 	},
 	
 	remove: function(param, callback) {
-		$.ajax({
-			url: this.url + param.key,
-			type: "delete",
-			data: {},
-			success: function(data) {
-				callback(data);
-			}
-		})
+		if(navigator.onLine) {
+			$.ajax({
+				url: this.url + param.key,
+				type: "delete",
+				data: {},
+				success: function(data) {
+					callback();
+				}
+			})
+		} else {
+			localStorage.removeItem("dataObject" + param.key);
+			callback();
+		}	
 	}
 };
 
@@ -99,13 +149,6 @@ var todo = {
 	changeURLFilter: function(e) {
 		if(e.state) {
 			var method = e.state.method;
-			// if(method === "all") {
-			// 	this.allView();
-			// } else if(method === "active") {
-			// 	this.activeView();
-			// } else if(method === "completed") {
-			// 	this.completedView();
-			// }
 			this[method + "View"]();
 		} else {
 			this.allView();
@@ -180,7 +223,7 @@ var todo = {
 		var input = e.target;
 		var li = input.parentNode.parentNode;
 		var complete = input.checked ? "1" : "0";
-
+		
 		todoSync.complete({
 			"key": li.dataset.key,
 			"complete": complete
