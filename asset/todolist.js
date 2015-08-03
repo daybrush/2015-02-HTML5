@@ -24,7 +24,7 @@ var todoSync = {
 	},
 
 	makeArr: function() {
-		for(var i = 0; i < 10; i++) {
+		for(var i = 0; i < 10; i++) {	// 테스트 용으로 10개만
 			var retrievedItem = JSON.parse(localStorage.getItem("dataObject" + i));
 
 			if(!retrievedItem) {
