@@ -1,3 +1,53 @@
+var logStyle = "font-size: 12px; color: red; font-weight: 800;";
+
+var TODOLocalStorage = {
+  
+  local : window.localStorage,
+  localContextArray : [],
+  
+  clearLocal : function(){
+    console.log("%c Clear local storage :", logStyle);
+    this.local.clear();
+    console.log(this.local);
+    this.localContextArray = [];
+  },
+    
+  addLocal : function(context) {
+    console.log("%cadd to localStorage", logStyle);
+
+    var index = context.id;
+    console.log(context);
+    this.local.setItem(index, JSON.stringify(context));
+  },
+  
+  completedLocal : function(param) {
+    console.log("%ccomplete adjust to localStorage", logStyle);
+    
+    var completedTodo = JSON.parse(this.local.getItem(param.key));
+    completedTodo.isCompleted = param.completed === 1?"completed":"";
+    completedTodo.completed = param.completed;
+    this.local.setItem(param.key, JSON.stringify(completedTodo));
+    
+  },
+  
+  deleteLocal : function(param) {
+    console.log("%cremove adjust to localStorage", logStyle);
+    this.local.removeItem(param.key);
+  },
+  
+  getLocal : function() {
+    
+    var contextArray = [];
+    
+    for( key in this.local ){
+      var context = JSON.parse(this.local.getItem(key));
+      contextArray.push(context);
+    }
+    return contextArray;
+  }
+}
+
+
 var TODOSync = {
   URL : "http://128.199.76.9:8002/jsfumato/",
   
@@ -11,6 +61,8 @@ var TODOSync = {
       $("#header").removeClass("offline");
 //      서버로 Sync
       
+      
+      
     }else{
       $("#header").addClass("offline");
     }
@@ -19,6 +71,7 @@ var TODOSync = {
   add : function(todo, callback){
     
     if(navigator.onLine){
+      
       var xhr = new XMLHttpRequest();
       xhr.open('PUT', this.URL, true);
       xhr.setRequestHeader("content-type", "application/x-www-form-urlencoded;charset=UTF-8");
@@ -26,41 +79,74 @@ var TODOSync = {
         callback(JSON.parse(xhr.responseText));
       });
       xhr.send("todo=" + todo);
+      
     }else{
-//      data를 클라이언트에 저장 -> localStorage, indexedDB, (요즘은 안쓰는)websql
+      
+      var localresponseText = { insertId : "local_"+TODOLocalStorage.local.length };
+      console.log(localresponseText);
+      callback(localresponseText);
+      console.log(TODOLocalStorage.local);
+
     }
   },
   
   get : function(callback){
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', this.URL, true);
-    xhr.setRequestHeader("content-type", "application/x-www-form-urlencoded;charset=UTF-8");
-    xhr.addEventListener("load", function(e){
-      callback(JSON.parse(xhr.responseText));
-    });
-    xhr.send();    
+    
+    if(navigator.onLine){
+
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', this.URL, true);
+      xhr.setRequestHeader("content-type", "application/x-www-form-urlencoded;charset=UTF-8");
+      xhr.addEventListener("load", function(e){
+        callback(JSON.parse(xhr.responseText));
+      });
+      xhr.send();
+      
+    }else{
+      
+      var localContextArray = TODOLocalStorage.getLocal();
+      console.log("%coffline :: Get List from LocalStorage", logStyle);
+      callback(localContextArray);
+      
+    }
   },
     
   completed : function(param, callback){
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', this.URL+param.key, true);
-    xhr.setRequestHeader("content-type", "application/x-www-form-urlencoded;charset=UTF-8");
-    xhr.addEventListener("load", function(e){
-      callback(JSON.parse(xhr.responseText));
-    });
-    xhr.send("completed=" + param.completed);    
+    
+    if(navigator.onLine){
+    
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', this.URL+param.key, true);
+      xhr.setRequestHeader("content-type", "application/x-www-form-urlencoded;charset=UTF-8");
+      xhr.addEventListener("load", function(e){
+        callback(JSON.parse(xhr.responseText));
+      });
+      xhr.send("completed=" + param.completed);
+    
+    }else{
+      callback();
+    }
   },
   
+  
+  
   delete : function(param, callback){
-    var xhr = new XMLHttpRequest();
-    xhr.open('DELETE', this.URL+param.key, true);
-    xhr.setRequestHeader("content-type", "application/x-www-form-urlencoded;charset=UTF-8");
-    xhr.addEventListener("load", function(e){
-      callback(JSON.parse(xhr.responseText));
-    });
-    xhr.send("delete=" + param.key); 
+    
+    if(navigator.onLine){
+        var xhr = new XMLHttpRequest();
+      xhr.open('DELETE', this.URL+param.key, true);
+      xhr.setRequestHeader("content-type", "application/x-www-form-urlencoded;charset=UTF-8");
+      xhr.addEventListener("load", function(e){
+        callback(JSON.parse(xhr.responseText));
+      });
+      xhr.send("delete=" + param.key); 
+    }else{
+      callback();
+    }
   }
 }
+
+
 
 var TODO = {
   ENTER_KEYCODE : 13,
@@ -82,19 +168,9 @@ var TODO = {
   },
   
   changeURLFilter : function(e){
-    console.log(e.state.method);
     if(e.state){
       var method = e.state.method;
-      this[method+"View"]();
-//      
-//      if(method == "all"){
-//        this.allView();
-//      }else if(method == "active"){
-//        this.activeView();
-//      }else if(method == "completed"){
-//        this.completedView();
-//      }
-//            
+      this[method+"View"]();        
     }
   },
   
@@ -103,7 +179,6 @@ var TODO = {
     var tagName = target.prop("tagName").toLowerCase();
     if(tagName == "a"){
       var href = target.attr("href");
-      console.log(href);
       
       if(href == "todo.html"){
         this.allView();
@@ -157,15 +232,15 @@ var TODO = {
   
   get : function(){
     TODOSync.get(function(json){
-      var contextArray = [];
       
+      var contextArray = [];      
       for(var i=0; i<json.length; i++){
-        var isCompleted = json[i].completed === 1?"completed" : '';
+        var isCompleted = (json[i].completed === 1)?"completed" : '';
         context = { 
-          key : json[i].id, 
+          id : json[i].id, 
           isCompleted : isCompleted,
-          isChecked : json[i].completed,
-          content : json[i].todo
+          completed : json[i].completed,
+          todo : json[i].todo
         };
         contextArray.push(context);
       }
@@ -178,7 +253,9 @@ var TODO = {
       var todo = $("#new-todo").val();
       
       TODOSync.add(todo, function(json){
-        var context = [{ key : json.insertId, isCompleted : '', isChecked : false, content : todo }]
+        var context = { id : json.insertId, isCompleted : '', completed : 0, todo : todo };
+        TODOLocalStorage.addLocal(context);
+        var context_fix = [context];
         $("#todo-list").prepend(this.build(context));
         $("#new-todo").val("");
       }.bind(this));
@@ -191,28 +268,35 @@ var TODO = {
     var li = input.closest("li");  
     var completed = input.is(":checked")? 1 : 0;
     
-    TODOSync.completed({
+    var param = {
       "key" : li.data("key"),
       "completed" : completed
-    }, function(){
+    }
+    
+    TODOSync.completed(param, function(){
       li.toggleClass("completed");
+      TODOLocalStorage.completedLocal(param);
     })
   },
     
   delete : function(e) {  
     var button = $(e.currentTarget);
     var li = button.closest("li");
-
-    TODOSync.delete({
+    var param = {
       "key" : li.data("key")
-    }, function(){
+    }
+    
+    TODOSync.delete(param, function(){
       li.addClass("delete");
       li.on("transitionend", function(){
         li.remove();
       })
+      TODOLocalStorage.deleteLocal(param);
     })
   }
 }
 
+//TODOLocalStorage.clearLocal();
+console.log(TODOLocalStorage.local);
 TODO.init();
 TODOSync.init();
