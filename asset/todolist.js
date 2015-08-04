@@ -1,77 +1,208 @@
 /*141005 KwonDaye*/
 
-// 역순으로
-// 초록색 토글   
+var id = 0;
+
+var dataArr = [];
 
 var todoSync = {
-	
-	get: function(callback) {
-		var xhr = new XMLHttpRequest();
-		xhr.open("GET", "http://128.199.76.9:8002/FreshFleshFlash", true);
-		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
-		xhr.addEventListener("load", function(e) {
-			callback(JSON.parse(xhr.responseText));
-		});
-		xhr.send();
+	url: "http://128.199.76.9:8002/FreshFleshFlash/", 
+
+	init: function() {		
+		document.getElementById("header").classList[navigator.onLine ? "remove" : "add"]("offline");
+
+		window.addEventListener("online", this.onofflineListener());
+		window.addEventListener("offline", this.onofflineListener());
 	},
-	
+
+	onofflineListener: function() {
+		document.getElementById("header").classList[navigator.onLine ? "remove" : "add"]("offline");
+
+		if(navigator.onLine) {
+			//서버로 싱크 맞추기
+
+		} 
+	},
+
+	makeArr: function() {
+		for(var i = 0; i < 10; i++) {	// 테스트 용으로 10개만
+			var retrievedItem = JSON.parse(localStorage.getItem("dataObject" + i));
+
+			if(!retrievedItem) {
+				continue;
+			}
+
+			dataArr.push(retrievedItem);
+		}
+	},
+
+	get: function() {
+		if(navigator.onLine) {
+			$.ajax({
+				url: this.url,
+				type: "get",
+				data: {},
+				success: function(data) {
+					todo.init(data);
+				}
+			})
+		} else {
+			// var retrievedItem = localStorage.getItem("dataArr");
+			// todo.init(JSON.parse(retrievedItem));
+			// for(var i = 0; i < 10; i++) {
+			// 	var retrievedItem = JSON.parse(localStorage.getItem("dataObject" + i));
+			// 	if(!retrievedItem) {
+			// 		console.log("continue!");
+			// 		continue;
+			// 	}
+			// 	dataArr.push(retrievedItem);
+			// }
+			this.makeArr();
+			todo.init(dataArr);
+		}
+	},
+
 	add: function(todo, callback) {
-		var xhr = new XMLHttpRequest();
-		xhr.open("PUT", "http://128.199.76.9:8002/FreshFleshFlash", true);
-		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
-		xhr.addEventListener("load", function(e) {
-			callback(JSON.parse(xhr.responseText));
-		});
-		xhr.send("todo=" + todo);
+		if(navigator.onLine) {
+			$.ajax({
+				url: this.url,
+				type: "put",
+				data: {
+					todo: todo
+				},
+				success: function(data) {
+					callback(data);
+				}
+			})
+		} else {
+			//data를 클라이언트에 저장 ==> localStorage, indexedDB, websql
+			// dataArr[id] = {"insertId": id, "id": id, "todo": todo, "completed": 0};
+			// localStorage.setItem("dataArr", JSON.stringify(dataArr));
+			// callback(dataArr[id]);
+			// id++;
+
+			var dataObject = {"insertId": id, "id": id, "todo": todo, "completed": 0};
+			localStorage.setItem("dataObject" + id, JSON.stringify(dataObject));
+			callback(dataObject);
+			id++;
+		}
 	},
-	
+
 	complete: function(param, callback) {
-		var xhr = new XMLHttpRequest();
-		xhr.open("POST", "http://128.199.76.9:8002/FreshFleshFlash/" + param.key, true);
-		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
-		xhr.addEventListener("load", function(e) {
-			callback(JSON.parse(xhr.responseText));
-		});
-		xhr.send("completed=" + param.complete);
+		if(navigator.onLine) {
+			$.ajax({
+				url: this.url + param.key,
+				type: "post",
+				data: {
+					completed: param.complete
+				},
+				success: function(data) {
+					callback();
+				}
+			})
+		} else {
+			var todo = JSON.parse(localStorage.getItem("dataObject" + param.key)).todo;
+			var dataObject = {"insertId": param.key, "id": param.key, "todo": todo, "completed": param.complete};
+			localStorage.setItem("dataObject" + param.key, JSON.stringify(dataObject));
+			callback();
+		}
 	},
 	
 	remove: function(param, callback) {
-		var xhr = new XMLHttpRequest();
-		xhr.open("DELETE", "http://128.199.76.9:8002/FreshFleshFlash/" + param.key, true);
-		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
-		xhr.addEventListener("load", function(e) {
-			callback(JSON.parse(xhr.responseText));
-		});
-		xhr.send();
+		if(navigator.onLine) {
+			$.ajax({
+				url: this.url + param.key,
+				type: "delete",
+				data: {},
+				success: function(data) {
+					callback();
+				}
+			})
+		} else {
+			localStorage.removeItem("dataObject" + param.key);
+			callback();
+		}	
 	}
 };
 
 var todo = {
-	
 	KEYCODE_ENTER: 13,
 
-	init: function() {
-		$(document).ready(function() {
-			todoSync.get(function(json) {
-				for(var i in json) {
-					var todo = json[i].todo;
-					var className = (json[i].completed == 1) ? "completed" : "";;
-					var li = this.make(todo, json[i].id, className);
+	selectedIndex: 0,
 
-					$("#todo-list").append(li);
-				}
-			}.bind(this));
+	init: function(data) {
+		for(var i = data.length - 1; i >= 0; i--) {
+			var todo = data[i].todo;
+			var className = (data[i].completed == 1) ? "completed" : "";
+			var checked = (data[i].completed == 1) ? "checked" : "";
+			var li = this.make(todo, data[i].id, className, checked);
+			$("#todo-list").append(li);  //==> for 바깥으로
+		}
 
-			$("#new-todo").keydown(this.add.bind(this));
-			$("#todo-list").on("click", ".toggle", this.complete.bind(this));	//on을 쓴다면 currentTarget == target이겠지, 항상 
-			$("#todo-list").on("click", ".destroy", this.remove.bind(this));
-		}.bind(this));
+		$("#new-todo").keydown(this.add.bind(this));
+		$("#todo-list").on("click", ".toggle", this.complete.bind(this));
+		$("#todo-list").on("click", ".destroy", this.remove.bind(this));	
+
+		document.getElementById("filters").addEventListener("click", this.changeStateFilter.bind(this));	
+		window.addEventListener("popstate", this.changeURLFilter.bind(this));
+	},
+
+	changeURLFilter: function(e) {
+		if(e.state) {
+			var method = e.state.method;
+			this[method + "View"]();
+		} else {
+			this.allView();
+		}
+	},
+
+	changeStateFilter: function(e) {
+		var target = e.target;
+		var tagName = target.tagName.toLowerCase();
+
+		if(tagName == "a") {
+			var href = target.getAttribute("href");
+
+			if(href === "index.html") {
+ 				this.allView();
+ 				history.pushState({"method": "all"}, null, "index.html");
+			} else if(href === "active") {
+				this.activeView();
+				history.pushState({"method": "active"}, null, "active");
+			} else if(href === "completed") {
+				this.completedView();
+				history.pushState({"method": "completed"}, null, "completed");
+			}
+		}
+
+		e.preventDefault();
+	},
+
+	allView: function() {
+		document.getElementById("todo-list").className = "";
+		this.selectNavigator(0);
+	},
+
+	activeView: function() {
+		document.getElementById("todo-list").className = "all-active";
+		this.selectNavigator(1);
+	},
+
+	completedView: function() {
+		document.getElementById("todo-list").className = "all-completed";
+		this.selectNavigator(2);
+	},
+
+	selectNavigator: function(index) {
+		var navigatorList = document.querySelectorAll("#filters a");
+		navigatorList[this.selectedIndex].classList.remove("selected");
+		navigatorList[index].classList.add("selected");
+		this.selectedIndex = index;
 	},
 	
-	make: function(todo, key, className) {
+	make: function(todo, key, className, checked) {
 		var source = $("#todo-template").html();
 		var template = Handlebars.compile(source);
-		var context = {doWhat: todo, liId: key, className: className};
+		var context = {doWhat: todo, liId: key, className: className, checked: checked};
 		var html = template(context);
 		return html;
 	},
@@ -79,6 +210,7 @@ var todo = {
 	add: function(e) {
 		if(e.keyCode === this.KEYCODE_ENTER) {
 			var todo = $("#new-todo").val();
+
 			todoSync.add(todo, function(json) {
 				var li = this.make(todo, json.insertId, "");
 				$("#todo-list").append(li);
@@ -91,17 +223,15 @@ var todo = {
 		var input = e.target;
 		var li = input.parentNode.parentNode;
 		var complete = input.checked ? "1" : "0";
-
+		
 		todoSync.complete({
 			"key": li.dataset.key,
 			"complete": complete
 		}, function() {
 			if(complete == "1") {
-				li.className = "completed";
-				//$(li).addClass("completed");
+				$(li).addClass("completed");
 			} else {
-				li.className = "";
-				//$(li).addClass("");
+				$(li).removeClass("completed");
 			}	
 		});
 	},
@@ -112,17 +242,15 @@ var todo = {
 		todoSync.remove({
 			"key": li.dataset.key
 		}, function() {
-			li.className = "deleting";
-			$(li).bind("webkitTransitionEnd", function(e) { 
-				$(this).remove();				//--> 이것도 delegation으로 바깥으로 빼자. 	//$(e.currentTarget).remove();
-			});
+			$(li).addClass("deleting");
 			$(li).bind("transitionend", function(e) { 
 				$(this).remove();
 			});
 		});
-
 	}
 };
 
-todo.init();
-
+$(document).ready(function() {
+	todoSync.init();
+	todoSync.get();
+});
