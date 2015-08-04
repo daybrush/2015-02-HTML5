@@ -3,12 +3,12 @@ $(document).ready(function(){
 });
 
 var Todo = {
-  destURL : "http://128.199.76.9:8002/minhyeok4dev/",
+  syncer : navigator.onLine?OnlineSyncer:OfflineSyncer,
 
   init : function(){
     this.onKeyEvent();
     this.onClickEvent();
-
+    this.onNetworkEvent();
     this.loadTODOs();
   },
 
@@ -34,6 +34,15 @@ var Todo = {
     }.bind(this));
   },
 
+  onNetworkEvent : function(){
+    $(window).on('offline online', function(){
+      if (navigator.onLine)
+        this.syncer.sync();
+
+      this.syncer = navigator.onLine?OnlineSyncer:OfflineSyncer;
+    }.bind(this));
+  },
+
   newTODOWithData : function(text, id, isCompleted){
     var $template = $(Handlebars.compile($('#new-todo-template').html())({body: text}));
 
@@ -47,40 +56,31 @@ var Todo = {
   },
 
   saveTODO : function(text){
-    $.ajax({
-      method: "PUT",
-      url: this.destURL,
-      data: {todo: text}
-    }).done(function(res){
+    this.syncer.save(text, function(res){
       $('#todo-list').append(this.newTODOWithData(text, res.insertId, false));
       $('#new-todo').val("");
     }.bind(this));
   },
 
   loadTODOs : function(){
-    $.get(this.destURL)
-      .done(function(res){
-        var res = res.reverse();
+    this.syncer.index(function(res){
+      var res = res.reverse();
 
-        for (var i=0;i<res.length;i++){
-          var loadedTODO = this.newTODOWithData(res[i].todo, res[i].id, !!res[i].completed);
-          $('#todo-list').append(loadedTODO);
-        }
-      }.bind(this));
+      for (var i=0;i<res.length;i++){
+        var loadedTODO = this.newTODOWithData(res[i].todo, res[i].id, !!res[i].completed);
+        $('#todo-list').append(loadedTODO);
+      }
+    }.bind(this));
   },
 
   completeTODO : function($targetTODO, isCompleted){
-    $.post(this.destURL + $targetTODO.data('id'), {completed: +isCompleted})
-      .done(function(res){
-        $targetTODO.toggleClass('completed');
-      });
+    this.syncer.complete($targetTODO.data('id'), isCompleted, function(){
+      $targetTODO.toggleClass('completed');
+    });
   },
 
   deleteTODO : function($targetTODO){
-    $.ajax({
-      method: "DELETE",
-      url: this.destURL + $targetTODO.data('id')
-    }).done(function(res){
+    this.syncer.delete($targetTODO.data('id'), function(){
       $targetTODO.css('animation', 'fadeOut 500ms');
       $targetTODO.on('webkitAnimationEnd animationend',function(){
           $targetTODO.remove();
