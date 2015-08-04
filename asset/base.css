@@ -195,7 +195,32 @@ label[for='toggle-all'] {
 	border-bottom: 1px dotted #ccc;
 	-webkit-transition: opacity 1s;
 	transition: opacity 1s;
+	-webkit-animation-duration: 1s;
+	-webkit-animation-name: fadeIn;
 }
+
+@-webkit-keyframes fadeIn {
+  from {	
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+#todo-list li .removeTODO {
+	-webkit-animation-duration: 1s;
+	-webkit-animation-name: fadeOut;
+}
+
+@-webkit-keyframes fadeOut {
+  from {	
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+} 
 
 #todo-list li.appending{
 	opacity: 0;
