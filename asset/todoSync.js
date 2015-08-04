@@ -9,50 +9,56 @@ var TODOSync = {
 	init: function() {
 		$(window).on('online', this.onoffListener);
 		$(window).on('offline', this.onoffListener);
+		localStorage.ajaxList = [];
 	},
 
 	onoffListener: function() {
 		if(navigator.onLine){
 			$("#header").removeClass("offline");
+			
 			// 클라이언트에 있는 자료 서버로 보내기. 
+			$.each(lacalStorage.ajaxList, function(i, param) {
+				$.ajax(param);
+			});
+			localStorage.ajaxList = []; //remove all elements.
 		} else {
 			$("#header").addClass("offline");
 		}
 	},
 
 	get: function(callback) {
+		var param = { method: "GET", url: this.address, success: callback, error: this.alertAjaxFail };
 		if(navigator.onLine){
-			var param = { method: "GET", url: this.address };
-			$.ajax(param).then(callback, this.alertAjaxFail);
+			$.ajax(param);
 		} else {
-			//local storage에 저장
+			localStorage.ajaxList.push(param);
 		}
 	},
 
 	add: function(sTodo, callback) {
+		var param = { method: "PUT", url: this.address, data: "todo=" + sTodo, success: callback, error: this.alertAjaxFail };
 		if(navigator.onLine){
-			var param = { method: "PUT", url: this.address, data: "todo=" + sTodo };
-			$.ajax(param).then(callback, this.alertAjaxFail);
+			$.ajax(param);
 		} else {
-			//local storage에 저장
+			localStorage.ajaxList.push(param);
 		}	
 	},
 
 	complete: function(oParam, callback) {
+		var param = { method: "POST", url: this.address + "/" + oParam.todoKey, data: "completed=" + oParam.complete, success: callback, error: this.alertAjaxFail };
 		if(navigator.onLine){
-			var param = { method: "POST", url: this.address + "/" + oParam.todoKey, data: "completed=" + oParam.complete };
-			$.ajax(param).then(callback, this.alertAjaxFail);
+			$.ajax(param);
 		} else {
-			//local storage에 저장
+			localStorage.ajaxList.push(param);
 		}
 	},
 
 	remove: function(oParam, callback) {
+		var param = { method: "DELETE", url: this.address + "/" + oParam.todoKey, success: callback, error: this.alertAjaxFail };
 		if(navigator.onLine) {
-			var param = { method: "DELETE", url: this.address + "/" + oParam.todoKey };
-			$.ajax(param).then(callback, this.alertAjaxFail);
+			$.ajax(param);
 		} else {
-
+			localStorage.ajaxList.push(param);
 		}
 	},
 

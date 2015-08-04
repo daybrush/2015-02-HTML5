@@ -47,7 +47,7 @@ var TODO = {
 	removeClassName: function(selector) {
 		$.each($(selector), function(i, el) {
 			$(el).removeClass();
-		})
+		});
 	},
 
 	get: function() {
