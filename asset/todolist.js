@@ -1,10 +1,57 @@
-var listnum = 0;
-
+window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction;
+window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange
 
 
 var TODOSync = {
 	url : "http://128.199.76.9:8002/cca-company",
 	nickname : "cca-company",
+	IDBRequest : null,
+	maxId : 0,
+	init : function(){
+		$(window).on("online offline", this.onofflineListner);
+
+		this.IDBRequest = window.indexedDB.open(this.nickname, 3);
+		this.IDBRequest.onupgradeneeded = this.upgradeDB;
+
+	},
+	upgradeDB : function(e){
+		var db = e.target.result;
+		db.createObjectStore("todolist",{keyPath: "localId", autoIncrement : true});
+	},
+	onofflineListner : function(){
+		$("#header")[(navigator.onLine)?"removeClass":"addClass"]("offline");
+
+		if(navigator.onLine){
+			// 서버와 데이터 싱크
+			var objectStore = TODOSync.IDBRequest.result.transaction(["todolist"],"readwrite").objectStore("todolist");
+
+			objectStore.openCursor(null,"prev").onsuccess = function(event){
+				var cursor = event.target.result;
+
+				if(cursor){
+					var data = {
+						nickname : TODOSync.nickname,
+						todo : cursor.value.todo,
+						id : cursor.value.id,
+						completed : cursor.value.completed
+					};
+
+					var url = TODOSync.url;
+					if(cursor.value.method != "PUT") url+='/'+cursor.value.id;
+
+					TODOSync.ajaxRequest(url, cursor.value.method, data);
+
+					cursor.delete();	// 커서가 가리키는 오브젝트를 삭제
+					cursor.continue();	// 6시간 삽질의 스페셜 게스트... 현재 커서에서 지정된 방향으로 한 칸 움직이고 해당 커서에 대해 onsuccess를 한번 더 호출하는 것 같음...
+
+				}else{
+					console.log('sync complete');
+				}
+			}
+
+		}
+	},
 	ajaxRequest : function(url, method, data, callback){
 
 		var callback = callback || function(){};
@@ -17,54 +64,110 @@ var TODOSync = {
 		}).done(callback);
 
 	},
+	localChange : function(data){
+		var objectStore = this.IDBRequest.result.transaction(["todolist"],"readwrite").objectStore("todolist");
+
+		objectStore.add(data).onsuccess = function(){
+			console.log("local change complete");
+		};
+	},
 	get : function(callback){
 		this.ajaxRequest(this.url, "GET", {nickname : this.nickname}, callback);
 	},
 	add : function(todo,callback){
-		var data = {
-			nickname : this.nickname,
-			todo : todo
+		this.maxId += 1;
+
+		if(navigator.onLine){
+
+			var data = {
+				nickname : this.nickname,
+				todo : todo
+			}
+			this.ajaxRequest(this.url, "PUT", data, callback);
+
+		}else{
+			// 오프라인 연결시 로컬에 저장
+			var data = {
+				id : this.maxId,
+				todo : todo,
+				completed : 0,
+				method : "PUT"
+			};
+			this.localChange(data);
+
+			callback({insertId : this.maxId});
 		}
-		this.ajaxRequest(this.url, "PUT", data, callback);
 	},
 	complete:function(id, completed){
-		var data = {
-			nickname : this.nickname,
-			id : id,
-			completed : completed
+
+		if(navigator.onLine){
+			var data = {
+				nickname : this.nickname,
+				id : id,
+				completed : completed
+			}
+			this.ajaxRequest(this.url + '/' + id, "POST", data);
+		}else{
+			var data = {
+				id : id,
+				completed : completed,
+				method : "POST"
+			};
+			this.localChange(data);
 		}
-		this.ajaxRequest(this.url + '/' + id, "POST", data);
+
 	},
 	remove:function(id){
-		var data = {
-			nickname : this.nickname,
-			id : id
+
+		if(navigator.onLine){
+			var data = {
+				nickname : this.nickname,
+				id : id
+			}
+			this.ajaxRequest(this.url + '/' + id, "DELETE", data);
+		}else{
+			var data = {
+				id : id,
+				method : "DELETE"
+			};
+			this.localChange(data);
 		}
-		this.ajaxRequest(this.url + '/' + id, "DELETE", data);
 	}
 }
 
 
 var TODO = {
-	listData : null,
-	template : Handlebars.compile( $("#template").html() ),
-
 	ENTER_KEYCODE : 13,
 	init : function(){
 		$("body").on("keydown","#new-todo", this.add);
 		$("body").on("click", ".toggle", this.complete);
 		$("body").on("click", ".destroy", this.remove);
 
-		TODOSync.get(function(data){
-			var list = data;
+		this.getlist();
+	},
+	getlist : function(){
+		TODOSync.get(function(list){
+			var template = Handlebars.compile( $("#template").html() );
+			var itemList = [];
 
-			for(var i = list.length-1; i >= 0; --i)
+			TODOSync.maxId = list[0].id;
+
+			for(var i = 0; i < list.length; ++i)
 			{
-				TODO.build(list[i].todo, list[i].id, list[i].completed);
+				var data = {
+					title : list[i].todo,
+					id : list[i].id,
+					completed : list[i].completed
+				}
+
+				var newItem = $(template(data));
+				itemList.push(newItem);
 			}
+			$("#todo-list").append(itemList);
 		});
 	},
 	build : function(todo, insertId, completed){
+		var template = Handlebars.compile( $("#template").html() );
 
 		// 새 리스트 항목 생성
 		var data = {
@@ -73,13 +176,11 @@ var TODO = {
 			completed : completed
 		}
 
-		var newItem = $(TODO.template(data));
+		var newItem = $(template(data));
 
 		newItem.prependTo("#todo-list")
 			.css({opacity:0})
-			.removeClass("sample");
-			
-		newItem.animate({opacity:1.0},400);
+			.animate({opacity:1.0},400);
 
 	},
 	complete: function(){
@@ -104,7 +205,6 @@ var TODO = {
 		TODOSync.remove(id);
 	},
 	add: function(e){
-		// 여기에서 this.ENTER_KEYCODE를 호출하면 undefined가 뜹니다....왜....?
 		if(e.keyCode == 13){
 			// 새 리스트 항목 생성
 			var todo = $(this).val();
@@ -125,4 +225,5 @@ Handlebars.registerHelper('completed', function(conditional, options) {
   }
 });
 
+TODOSync.init();
 TODO.init();
