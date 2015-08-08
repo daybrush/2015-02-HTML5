@@ -3,10 +3,10 @@
 	<head>
 		<meta charset="utf-8">
 		<title>HTML5 Programming - 1 Class</title>
-		<link rel="stylesheet" href="asset/base.css">
-		<script src="asset/jquery-1.11.3.min.js"></script>
-		<script type="text/javascript" src="asset/handlebars-v3.0.3.js"></script>
-		<script type="text/javascript" src="asset/localforage.js"></script>
+		<link rel="stylesheet" href="static/base.css">
+		<script src="static/jquery-1.11.3.min.js"></script>
+		<script type="text/javascript" src="static/handlebars-v3.0.3.js"></script>
+		<script type="text/javascript" src="static/localforage.js"></script>
 
 	</head>
 	<body>
@@ -69,14 +69,15 @@
 			<li class="{}">
 			  <div class="view">
 			    <input class="toggle" type="checkbox" {}>
-			    <label>{{body}}</label>
+			    <label>{{'{{body}}'}}</label>
 			    <button class="destroy"></button>
 			  </div>
 			</li>
 		</div>
 
-		<script type="text/javascript" src="asset/todo_syncer.js"></script>
-		<script type="text/javascript" src="asset/todolist.js"></script>
+		<script type="text/javascript" src="static/todo_syncer.js"></script>
+		<script type="text/javascript" src="static/todolist.js"></script>
+		<script type="text/javascript" src="static/state_manager.js"></script>
 		
 	</body>
 </html>
