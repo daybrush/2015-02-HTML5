@@ -195,6 +195,7 @@ label[for='toggle-all'] {
 	border-bottom: 1px dotted #ccc;
 	-webkit-transition: opacity 1s;
 	transition: opacity 1s;
+	overflow:hidden;
 }
 
 #todo-list li.appending{
@@ -256,6 +257,10 @@ label[for='toggle-all'] {
 	text-shadow: 0 1px 0 #669991;
 	bottom: 1px;
 	position: relative;
+}
+
+#todo-list li.sample{
+	display:none;
 }
 
 #todo-list li label {
