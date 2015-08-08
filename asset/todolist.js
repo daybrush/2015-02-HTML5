@@ -19,33 +19,21 @@ var TODOSync = {
     url: "http://128.199.76.9:8002/milooy",
     contentType: "application/x-www-form-urlencoded; charset=UTF-8",
     init: function() {
-        window.addEventListener('onLine', this.onofflineListener);
-        window.addEventListener('offLine', this.onofflineListener);
+        $(window).on('online offline', this.onofflineListener);
     },
     onofflineListener: function() {
-        document.getElementById("header").classList[navigator.onLine? "remove" : "add"] ("offLine");
-
+        $('#header')[navigator.onLine? "removeClass" : "addClass"]('offline');
         if(navigator.onLine) {
             //서버로 sync맞추기
         }
     },
     get: function(callback) {
-        $.ajax({
-            type: "GET",
-            url: this.url,
-            data: {},
-            contentType: this.contentType,
-        }).done(function(data){
-            callback(data);
-        });
+        $.ajax({ type: "GET", url: this.url, contentType: this.contentType,
+        }).done(callback);
     },
     add: function(todo, callback) {
         if(navigator.onLine) {
-            $.ajax({
-                type: "PUT",
-                url: this.url,
-                data: { todo: todo },
-                contentType: this.contentType,
+            $.ajax({ type: "PUT", url: this.url, data: { todo: todo }, contentType: this.contentType,
             }).done(function(data){
                 callback(data);
             });
@@ -54,21 +42,13 @@ var TODOSync = {
         }
     },
     completed: function(param, callback) {
-        $.ajax({
-            type: "POST",
-            url: this.url+"/"+param.key,
-            data: { completed: param.completed },
-            contentType: this.contentType,
+        $.ajax({ type: "POST", url: this.url+"/"+param.key, data: { completed: param.completed }, contentType: this.contentType,
         }).done(function(data){
             callback(data);
         });
     },
     remove: function(param, callback) {
-        $.ajax({
-            type: "DELETE",
-            url: this.url+"/"+param.key,
-            data: { completed: param.completed },
-            contentType: this.contentType,
+        $.ajax({ type: "DELETE", url: this.url+"/"+param.key, data: { completed: param.completed }, contentType: this.contentType,
         }).done(function(data){
             callback(data);
         });
@@ -78,59 +58,47 @@ var TODOSync = {
 var TODO = {
     ENTER_KEYCODE: 13,
     selectedIndex: 0,
-    init: function() { //즉시실행함수 삭제함
+    init: function() {
         this.initTODO();
         $('#new-todo').keydown(this.add.bind(this));
         $('#todo-list').on( "click", '.toggle', this.completed)
         .on( "click", '.destroy', this.remove);
-        $('#filters').on('click', this.changeStateFilter.bind(this));
-        window.addEventListener("popstate", this.changeURLFilter.bind(this));
-
+        $('#filters').on('click', 'a', this.changeStateFilter);
+        $(window).on('popstate', this.changeURLFilter);
     },
     changeURLFilter: function(e) {
-        if(e.state){
-            var method = e.state.method;
-            this[method+"View"]();
+        if(history.state){
+            TODO[history.state.method+"View"]();
         } else {
-            this.allView();
+            TODO.allView();
         }
     },
     changeStateFilter: function(e) {
-        var target = e.target;
-        var tagName = e.target.tagName.toLowerCase();
-        if(tagName == 'a') {
-            var href = target.getAttribute('href');
-            console.log(href);
-            if(href === "index.html"){
-                this.allView();
-                history.pushState({"method":"all"}, null, "index.html");
-            } else if(href === "active") {
-                this.activeView();
-            history.pushState({"method":"active"}, null, "#/active");
-            } else if(href === "completed"){
-                this.completedView();
-                history.pushState({"method":"completed"}, null, "#/completed");
-            }
-        }
+        var method = $(this).text().toLowerCase();
+        var href = method==="all"? "index.html" : "#/"+method;
+
+        TODO[method+"View"]();
+        history.pushState({"method": method}, null, href);
+
         e.preventDefault();
     },
     allView: function() {
-        document.getElementById("todo-list").className = "";
+        $('#todo-list').removeClass();
         this.selectNavigator(0);
 
     },
     activeView: function() {
-        document.getElementById("todo-list").className = "all-active";
+        $('#todo-list').removeClass().addClass('all-active')
         this.selectNavigator(1);
 
     },
     completedView: function() {
-        document.getElementById("todo-list").className = "all-completed";
+        $('#todo-list').removeClass().addClass('all-completed')
         this.selectNavigator(2);
 
     },
     selectNavigator: function(index) {
-        var navigatorList = document.querySelectorAll('#filters a');
+        var navigatorList = $('#filters a');
         navigatorList[this.selectedIndex].classList.remove('selected');
         navigatorList[index].classList.add('selected');
         this.selectedIndex = index;
@@ -188,10 +156,7 @@ var TODO = {
             for(i in json){
                 var item = json[json.length-i-1]; // item 역순정렬
                 var completed = item.completed==1? 'completed' : null;
-
                 TODO.appendTODOHTML(item.todo, item.id, completed);
-
-                // 체크박스 속성 checked 추가.
                 if(completed!=null) $("#todo-list li:last-child input").attr("checked", true);
             }
         });

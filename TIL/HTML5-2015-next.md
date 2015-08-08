@@ -172,10 +172,13 @@
 if(navigator.online) {
     document.getElementById("header").classList.remove('offline');
 } else {
-    document.getElementById("header").classList.add('online');
+    document.getElementById("header").classList.add('offline');
 }
 //얘는 동일
 document.getElementById("header").classList[navigator.online? "remove" : "add"] ("offline")
+//제이쿼리론
+document.getElementById("header").classList[navigator.online? "remove" : "add"] ("offline")
+
 ```
 
 ## 0728 수업
