@@ -77,11 +77,19 @@ var TODOSync = {
         if(navigator.onLine) {
             $.ajax({ type: "DELETE", url: this.url+"/"+param.key, data: { completed: param.completed }, contentType: this.contentType,
             }).done(function(data){
+                console.log("UP REMOVED", param.key);
                 callback(data);
             });
         } else {
             callback({ completed: param.completed }); //필요한가?
+
+            //ls의 removed에 키 넣기
+            var removedArr = JSON.parse(localStorage.getItem('removed'));
+            removedArr.push(param.key);
+            console.log(JSON.stringify(removedArr));
+            localStorage.setItem('removed', JSON.stringify(removedArr));
         }
+
 
         //ls에 업데이트
         localStorage.removeItem(param.key);
@@ -182,48 +190,76 @@ var TODO = {
             });
         }
     },
-    initTODO: function(e) {
-        if(navigator.onLine) {
-            TODOSync.get(function(json){
-                //sync가 false인것들을 모두 서버에 올리고 sync를 true로 바꾼다.
-                var keys = Object.keys(localStorage), i = 0;
-                for (; i < keys.length; i++) {
-                    var data = JSON.parse(localStorage.getItem(keys[i]));
-
-                    if(data.sync == false) {
-                        TODOSync.add(data.todo, function(json){
-                            var key = json.insertId;
-                        });
-                    }
-                }
-
-                //ls를 비우고, 서버의 TODO들을 모두 ls에 저장
-                localStorage.clear();
-                for(i in json) {
-                    var item = json[json.length-i-1];
-                    var completed = item.completed==1? 'completed' : null;
-                    console.log("*****", item.completed);
-
-                    var todoObj = { 'todo': item.todo, 'completed': completed, 'sync': true };
-                    localStorage.setItem(item.id, JSON.stringify(todoObj));
-                }
-
-                /* TODO: for를 쓰지 않을 수 있을까?*/
-                /* TODO: map으로 개선. append를 TODO내에서 하지 않는다.*/
-                for(i in json){
-                    var item = json[json.length-i-1]; // item 역순정렬
-                    console.log(item);
-                    var completed = item.completed==1? 'completed' : null;
-                    TODO.appendTODOHTML(item.todo, item.id, completed);
-                    if(completed!=null) $("#todo-list li:last-child input").attr("checked", true);
-                }
-            });
-        } else {
-            // offline일때 ls에서 데이터를 가져와 넣어준다.
+    getTODO: function() {
+        TODOSync.get(function(json){
+            //sync가 false인것들을 모두 서버에 올리고 sync를 true로 바꾼다.
             var keys = Object.keys(localStorage), i = 0;
             for (; i < keys.length; i++) {
                 var data = JSON.parse(localStorage.getItem(keys[i]));
-                TODO.appendTODOHTML(data.todo, keys[i], data.completed);
+
+                if(data.sync == false) {
+                    TODOSync.add(data.todo, function(json){
+                        var key = json.insertId;
+                    });
+                }
+            }
+
+            //ls를 비우고, 서버의 TODO들을 모두 ls에 저장
+            localStorage.clear();
+            for(i in json) {
+                var item = json[json.length-i-1];
+                var completed = item.completed==1? 'completed' : null;
+                var todoObj = { 'todo': item.todo, 'completed': completed, 'sync': true };
+                localStorage.setItem(item.id, JSON.stringify(todoObj));
+            }
+
+            /* TODO: for를 쓰지 않을 수 있을까?*/
+            /* TODO: map으로 개선. append를 TODO내에서 하지 않는다.*/
+            for(i in json){
+                var item = json[json.length-i-1]; // item 역순정렬
+                console.log(item);
+                var completed = item.completed==1? 'completed' : null;
+                TODO.appendTODOHTML(item.todo, item.id, completed);
+                if(completed!=null) $("#todo-list li:last-child input").attr("checked", true);
+            }
+        });
+    },
+    removeFromOffline: function() {
+        //오프라인에서 지웠던 것들의 배열을 받아와 서버에서도 지워준다.
+        var removedArr = JSON.parse(localStorage.getItem('removed'));
+
+        for(i in removedArr) {
+            console.log('arr: ', removedArr[i])
+            TODOSync.remove({
+                "key": removedArr[i]
+            }, function() {
+                console.log('remove succed');
+            });
+        }
+    },
+    initTODO: function(e) {
+        // online: offline에서 지운 것들이 남아있다면 지운 후 TODO를 받아 그려준다.
+        if(navigator.onLine) {
+            if(localStorage.getItem('removed')) {
+                // ##디버그 필요: removeFromOffline이 모두 끝난 후 getTODO를 하고싶은데 그게 안된다.
+                $.when( TODO.removeFromOffline() ).done(function() {
+                    console.log("getTODO!!!!!");
+                    TODO.getTODO();
+                });
+            } else {
+                TODO.getTODO();
+            }
+        } else {
+            // offline: ls에서 데이터를 가져와 넣어준다.
+            var keys = Object.keys(localStorage), i = 0;
+            for (; i < keys.length; i++) {
+                var data = JSON.parse(localStorage.getItem(keys[i]));
+                if(keys[i]!== 'removed') TODO.appendTODOHTML(data.todo, keys[i], data.completed);
+            }
+
+            //removed된 obj들의 key가 들어갈 ls를 만든다.
+            if(!localStorage.getItem('removed')) {
+                localStorage.setItem('removed', '[]');
             }
         }
     }
