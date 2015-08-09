@@ -1,45 +1,68 @@
 /*
-onLine, offLine 이벤트를 할당하고
-offline일때 header엘리먼트에 offline클래스를 추가하고
-online일때 header엘리먼트에 offlien클래스를 삭제하기
-
-#todo-list엘리먼트에 active(/completed)엘리먼트를 누르면
-- ul에 all-active나 all-completed(/completed) 추가하기
-- 밑에 selected클래스를 탭클릭때마다 달아주기 (기존거에선 삭제 )
-
-동적으로 UI변경후 히스토리 추가(history.pushState({"method":"complete"}, null, "active"))
-뒤로가기 할 때 이벤트 받아서 변경 window.addEventListener("popstate", callback)
-
 수업시간에 할거
 Service worker(구 application cache)
 indexedDB(or localStorage)
 navigator.connection
+
+#서버 싱크맞추기
+- 온라인: ls에서 업뎃된 것(sync가 false인것)들을 서버에 저장하고 되면 true로 바꾼다.
+- 온라인: 서버에서 todo 받아오고
+- 온라인: 서버엔 있는데 ls에는 없는것들을 ls에 저장 / 맨처음엔 서버에 있는거 다 저장.
+- 온라인: todo추가나 삭제 하면 서버에도 ls에도 모두 한다.
+- 오프라인: ls에서 todo 받아온다.
+- 오프라인: todo추가나 삭제 하면 ls에 업뎃 (sync를 false로 한다.)
 */
 var TODOSync = {
+    offlineID: 1,
     url: "http://128.199.76.9:8002/milooy",
     contentType: "application/x-www-form-urlencoded; charset=UTF-8",
     init: function() {
+        $(window).load(function(){
+            //handlebar가 로드된 후에 마지막 key값을 받아오기 위한 로직. 개선 필요.
+            window.setTimeout(function() {
+                TODOSync.offlineID = $("#todo-list li:last-child").data('key')+1 || 1;
+                console.log("init and ", $("#todo-list li:last-child").data('key'));
+            }, 500);
+        });
+        // localStorage.setItem('offlineID', offlineID);
         $(window).on('online offline', this.onofflineListener);
     },
     onofflineListener: function() {
         $('#header')[navigator.onLine? "removeClass" : "addClass"]('offline');
+        //offline ID. 현재 있는 TODO의 최댓값 ID+1를 넣고 없다면 1
+        // console.log("**onoffListener: offline ID", localStorage.length == 0? 1 : $("#todo-list li:last-child").data('key')+1);
+        // init.offlineID = localStorage.length == 0? 1 : $("#todo-list li:last-child").data('key')+1;
         if(navigator.onLine) {
             //서버로 sync맞추기
         }
     },
     get: function(callback) {
-        $.ajax({ type: "GET", url: this.url, contentType: this.contentType,
-        }).done(callback);
+        if(navigator.onLine) {
+            console.log("ls length: " + localStorage.length);
+
+            $.ajax({ type: "GET", url: this.url, contentType: this.contentType,
+            }).done(callback);
+        } else {
+
+        }
     },
     add: function(todo, callback) {
+        var sync = navigator.onLine? true:false;
+
         if(navigator.onLine) {
             $.ajax({ type: "PUT", url: this.url, data: { todo: todo }, contentType: this.contentType,
             }).done(function(data){
                 callback(data);
             });
         } else {
-            //data를 클라에 저장 -> localstorage, indexdDB, webSQL
+            callback({todo:todo, insertId:TODOSync.offlineID});
         }
+
+        //ls에 저장
+        var todoObj = { 'todo': todo, 'completed':null, 'sync': sync };
+        console.log("offline::::", TODOSync.offlineID);
+        localStorage.setItem(TODOSync.offlineID, JSON.stringify(todoObj));
+        TODOSync.offlineID++;
     },
     completed: function(param, callback) {
         $.ajax({ type: "POST", url: this.url+"/"+param.key, data: { completed: param.completed }, contentType: this.contentType,
@@ -150,16 +173,48 @@ var TODO = {
         }
     },
     initTODO: function(e) {
-        TODOSync.get(function(json){
-            /* TODO: for를 쓰지 않을 수 있을까?*/
-            /* TODO: map으로 개선. append를 TODO내에서 하지 않는다.*/
-            for(i in json){
-                var item = json[json.length-i-1]; // item 역순정렬
-                var completed = item.completed==1? 'completed' : null;
-                TODO.appendTODOHTML(item.todo, item.id, completed);
-                if(completed!=null) $("#todo-list li:last-child input").attr("checked", true);
+        if(navigator.onLine) {
+            TODOSync.get(function(json){
+                //sync가 false인것들을 모두 서버에 올리고 sync를 true로 바꾼다.
+                var keys = Object.keys(localStorage), i = 0;
+                for (; i < keys.length; i++) {
+                    var data = JSON.parse(localStorage.getItem(keys[i]));
+
+                    if(data.sync == false) {
+                        TODOSync.add(data.todo, function(json){
+                            var key = json.insertId;
+                        });
+                    }
+                }
+
+                //ls를 비우고, 서버의 TODO들을 모두 ls에 저장
+                localStorage.clear();
+                for(i in json) {
+                    console.log("im in for", i);
+                    var item = json[json.length-i-1];
+                    var completed = item.completed==1? 'completed' : null;
+
+                    var todoObj = { 'todo': item.todo, 'completed': completed, 'sync': true };
+                    localStorage.setItem(item.id, JSON.stringify(todoObj));
+                }
+
+                /* TODO: for를 쓰지 않을 수 있을까?*/
+                /* TODO: map으로 개선. append를 TODO내에서 하지 않는다.*/
+                for(i in json){
+                    var item = json[json.length-i-1]; // item 역순정렬
+                    var completed = item.completed==1? 'completed' : null;
+                    TODO.appendTODOHTML(item.todo, item.id, completed);
+                    if(completed!=null) $("#todo-list li:last-child input").attr("checked", true);
+                }
+            });
+        } else {
+            // offline일때 ls에서 데이터를 가져와 넣어준다.
+            var keys = Object.keys(localStorage), i = 0;
+            for (; i < keys.length; i++) {
+                var data = JSON.parse(localStorage.getItem(keys[i]));
+                TODO.appendTODOHTML(data.todo, keys[i], data.completed);
             }
-        });
+        }
     }
 }
 TODO.init();
