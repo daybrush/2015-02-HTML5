@@ -14,6 +14,7 @@ navigator.connection
 */
 var TODOSync = {
     offlineID: 1,
+    sync: navigator.onLine? true:false,
     url: "http://128.199.76.9:8002/milooy",
     contentType: "application/x-www-form-urlencoded; charset=UTF-8",
     init: function() {
@@ -21,7 +22,6 @@ var TODOSync = {
             //handlebar가 로드된 후에 마지막 key값을 받아오기 위한 로직. 개선 필요.
             window.setTimeout(function() {
                 TODOSync.offlineID = $("#todo-list li:last-child").data('key')+1 || 1;
-                console.log("init and ", $("#todo-list li:last-child").data('key'));
             }, 500);
         });
         // localStorage.setItem('offlineID', offlineID);
@@ -29,17 +29,12 @@ var TODOSync = {
     },
     onofflineListener: function() {
         $('#header')[navigator.onLine? "removeClass" : "addClass"]('offline');
-        //offline ID. 현재 있는 TODO의 최댓값 ID+1를 넣고 없다면 1
-        // console.log("**onoffListener: offline ID", localStorage.length == 0? 1 : $("#todo-list li:last-child").data('key')+1);
-        // init.offlineID = localStorage.length == 0? 1 : $("#todo-list li:last-child").data('key')+1;
         if(navigator.onLine) {
             //서버로 sync맞추기
         }
     },
     get: function(callback) {
         if(navigator.onLine) {
-            console.log("ls length: " + localStorage.length);
-
             $.ajax({ type: "GET", url: this.url, contentType: this.contentType,
             }).done(callback);
         } else {
@@ -47,7 +42,7 @@ var TODOSync = {
         }
     },
     add: function(todo, callback) {
-        var sync = navigator.onLine? true:false;
+        // var sync = navigator.onLine? true:false;
 
         if(navigator.onLine) {
             $.ajax({ type: "PUT", url: this.url, data: { todo: todo }, contentType: this.contentType,
@@ -59,22 +54,37 @@ var TODOSync = {
         }
 
         //ls에 저장
-        var todoObj = { 'todo': todo, 'completed':null, 'sync': sync };
-        console.log("offline::::", TODOSync.offlineID);
+        var todoObj = { 'todo': todo, 'completed':null, 'sync': TODOSync.sync };
         localStorage.setItem(TODOSync.offlineID, JSON.stringify(todoObj));
         TODOSync.offlineID++;
     },
     completed: function(param, callback) {
-        $.ajax({ type: "POST", url: this.url+"/"+param.key, data: { completed: param.completed }, contentType: this.contentType,
-        }).done(function(data){
-            callback(data);
-        });
+        if(navigator.onLine) {
+            $.ajax({ type: "POST", url: this.url+"/"+param.key, data: { completed: param.completed }, contentType: this.contentType,
+            }).done(function(data){
+                callback(data);
+            });
+        } else {
+            callback({ completed: param.completed });
+        }
+
+        //ls에 업데이트
+        var todoObj = JSON.parse(localStorage.getItem(param.key));
+        todoObj.completed = todoObj.completed=='completed'? null : 'completed';
+        localStorage.setItem(param.key, JSON.stringify(todoObj));
     },
     remove: function(param, callback) {
-        $.ajax({ type: "DELETE", url: this.url+"/"+param.key, data: { completed: param.completed }, contentType: this.contentType,
-        }).done(function(data){
-            callback(data);
-        });
+        if(navigator.onLine) {
+            $.ajax({ type: "DELETE", url: this.url+"/"+param.key, data: { completed: param.completed }, contentType: this.contentType,
+            }).done(function(data){
+                callback(data);
+            });
+        } else {
+            callback({ completed: param.completed }); //필요한가?
+        }
+
+        //ls에 업데이트
+        localStorage.removeItem(param.key);
     }
 }
 
@@ -190,9 +200,9 @@ var TODO = {
                 //ls를 비우고, 서버의 TODO들을 모두 ls에 저장
                 localStorage.clear();
                 for(i in json) {
-                    console.log("im in for", i);
                     var item = json[json.length-i-1];
                     var completed = item.completed==1? 'completed' : null;
+                    console.log("*****", item.completed);
 
                     var todoObj = { 'todo': item.todo, 'completed': completed, 'sync': true };
                     localStorage.setItem(item.id, JSON.stringify(todoObj));
@@ -202,6 +212,7 @@ var TODO = {
                 /* TODO: map으로 개선. append를 TODO내에서 하지 않는다.*/
                 for(i in json){
                     var item = json[json.length-i-1]; // item 역순정렬
+                    console.log(item);
                     var completed = item.completed==1? 'completed' : null;
                     TODO.appendTODOHTML(item.todo, item.id, completed);
                     if(completed!=null) $("#todo-list li:last-child input").attr("checked", true);
