@@ -1,16 +1,23 @@
 /*
-수업시간에 할거
-Service worker(구 application cache)
-indexedDB(or localStorage)
-navigator.connection
+## 강의
+1. 온라인 / 오프라인
+- 오프라인일 때 localStorage에 저장하기
+- 온라인일 때 서버에 싱크 맞추기
+2. 뒤로 가기.
+- pushState활용하기
 
-#서버 싱크맞추기
-- 온라인: ls에서 업뎃된 것(sync가 false인것)들을 서버에 저장하고 되면 true로 바꾼다.
-- 온라인: 서버에서 todo 받아오고
-- 온라인: 서버엔 있는데 ls에는 없는것들을 ls에 저장 / 맨처음엔 서버에 있는거 다 저장.
-- 온라인: todo추가나 삭제 하면 서버에도 ls에도 모두 한다.
-- 오프라인: ls에서 todo 받아온다.
-- 오프라인: todo추가나 삭제 하면 ls에 업뎃 (sync를 false로 한다.)
+## Offline Sync
+(ls == localStorage)
+### 온라인
+1. ls에서 삭제된 것 목록을 받아와 서버에서 지운다
+2. ls에서 업뎃된 것(sync가 false인것)들을 서버에 저장하고 되면 true로 바꾼다.
+2. ls를 비우고, 서버의 todo들을 모두 ls에 새로 저장한다.
+3. 서버에서 todo 받아와서 그려준다
+5. todo추가나 삭제 하면 서버에도 ls에도 모두 한다.
+### 오프라인
+1. ls에서 todo 받아와서 그린다
+2. todo추가나 삭제 하면 ls에 업뎃 (sync를 false로 한다)
+3. todo삭제할땐 ls에 저장된 'removed'에 삭제된 id들을 넣어준다.
 */
 var TODOSync = {
     offlineID: 1,
@@ -24,26 +31,19 @@ var TODOSync = {
                 TODOSync.offlineID = $("#todo-list li:last-child").data('key')+1 || 1;
             }, 500);
         });
-        // localStorage.setItem('offlineID', offlineID);
+
         $(window).on('online offline', this.onofflineListener);
     },
     onofflineListener: function() {
         $('#header')[navigator.onLine? "removeClass" : "addClass"]('offline');
-        if(navigator.onLine) {
-            //서버로 sync맞추기
-        }
     },
     get: function(callback) {
         if(navigator.onLine) {
             $.ajax({ type: "GET", url: this.url, contentType: this.contentType,
             }).done(callback);
-        } else {
-
         }
     },
     add: function(todo, callback) {
-        // var sync = navigator.onLine? true:false;
-
         if(navigator.onLine) {
             $.ajax({ type: "PUT", url: this.url, data: { todo: todo }, contentType: this.contentType,
             }).done(function(data){
@@ -86,10 +86,8 @@ var TODOSync = {
             //ls의 removed에 키 넣기
             var removedArr = JSON.parse(localStorage.getItem('removed'));
             removedArr.push(param.key);
-            console.log(JSON.stringify(removedArr));
             localStorage.setItem('removed', JSON.stringify(removedArr));
         }
-
 
         //ls에 업데이트
         localStorage.removeItem(param.key);
