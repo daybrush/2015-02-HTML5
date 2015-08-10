@@ -16,6 +16,19 @@
     }
 }
 
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
 .shake{
     animation: shake .8s;
+}
+
+.fadeOut{
+    animation: fadeOut .8s forwards;
 }
