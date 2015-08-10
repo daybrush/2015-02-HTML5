@@ -261,14 +261,16 @@ var TODO = {
 	displayTodoList : function(){
 		var document = window.document;
 		var arrTodos = TODOStorageManager.get();
-
+		var sTodoEle = "";
+		
 		arrTodos.forEach(function(arr) {
 			var completed = arr.completed ? "completed" : "";
 			var checked = arr.completed ? "checked" : "";
-			var sTodoEle = this.build(arr.todoMessage, arr.keyIndex, arr.serverKey, completed, checked);
-			var todoList = document.getElementById("todo-list");
-			todoList.insertAdjacentHTML("beforeend", sTodoEle);
+			sTodoEle += this.build(arr.todoMessage, arr.keyIndex, arr.serverKey, completed, checked);
 		}.bind(this));
+
+		var todoList = document.getElementById("todo-list");
+		todoList.insertAdjacentHTML("beforeend", sTodoEle);
 	},
 	build : function(sTodoMessage, nKeyIndex, nServerKey, sCompleted, sChecked) {
 		if(sTodoMessage === "") return;
