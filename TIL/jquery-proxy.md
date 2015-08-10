@@ -1,5 +1,5 @@
 # jQuery Proxy
-jQuery의 네임스페이스를 관리할 수 있게 해준다.
+jQuery의 this(context)을 설정할 수 있다. bind의 jQuery버전.
 ```javascript
 var app = {
     config: {

@@ -114,5 +114,107 @@
         * 추가할때
         * 완료할때
         * 삭제할때
-        * 
+
+## 0714 수업
+- CSS animation
+    + js animation보다 더 성능이 좋다. 백그라운드로 돌아가니까.
+- requestAnimationFrame 부드러움
+    + 모니터 갱신 주기에 맞춰서 바뀌니.
     
+## 0721 수업
+- CSS animation이 성능이 더 좋지만
+    + 나의 인터랙션에 의해 애니메이션이 바뀌어야 하거나
+    + 저사양 브라우저같은 경우는 js로 해야한다.
+- Animation이 버블링된다는것도 숙지! 
+- try catch의 비용도 생각해라.
+    + context switching(with구문!!(쓰지마))
+- native js와 jQuery섞어쓰면 문제점
+    + maintainess 이슈
+- 시간 이슈
+    + 1. 초기성능
+        * 핵심포인트: 네트워크
+            - 적게 호출하는게 좋음!
+    + 2. 인터렉션 성능
+        * 핵심포인트: DOM
+            - 가능하면 적게 돔을 다루는게 좋음!!
+- fileupload는 blob으로 분할해서 할 수 있다.
+
+## 0726 week4 강의
+[link](http://portal.nhnnext.org/streaming/2014/2%ED%95%99%EA%B8%B0/HTML5%20Programming%20-%201/%EC%A0%84%EC%9A%A9%EC%9A%B0/325)
+- 학습할거
+    + online/offline 이벤트
+    + pushstate, popstate, replacestate를 이용한 히스토리 관리
+- 만약 인터넷이 끊겼다면?
+    + online/offline 상황 알수있다
+        * window.addEventListener('online', callback);
+        * window.addEventListener('offline', callback);
+        * navigator.online //boolean
+- 히스토리 관리
+    + active는 해야할것, completed는 완료된것 보여준다.
+    + 동적으로 페이지를 바꿀 때도 히스토리 관리가 필요.(사용자가 뒤로가기 눌렀을때)
+    + =>popstate...
+    + history.pushState({'id':1}, "active", "active.html"); //파라미터, url, 보여줄 html
+    + history.pushState({'id':2}, "completed", "completed.html");
+    + completed.html에서 뒤로가기 누르면 
+    + window.addEventListener('popstate', function(e){e.state'//파라미터 객체{'id':2 => {'id':1}}})
+- 메서드/이벤트
+    + history.pushState(param, titleName, url);
+        * 주소도 바뀌고 히스토리도 변경
+    + history.replaceState(param, titleName, url);
+        * 주소만 바뀌고 히스토리는 변경안함
+    + window.addEventListener('popstate', function(e){e.state;});
+        * pushstate나 replaceState에서 첫 번째 인자로 넣은 객체가 들어있음.
+- 메소드 호출을
+    + `a.some()`으로 호출할 수 있고
+    + `a['some']()`으로 할수도 있지.
+```javascript
+//얘랑
+if(navigator.online) {
+    document.getElementById("header").classList.remove('offline');
+} else {
+    document.getElementById("header").classList.add('offline');
+}
+//얘는 동일
+document.getElementById("header").classList[navigator.online? "remove" : "add"] ("offline")
+//제이쿼리론
+document.getElementById("header").classList[navigator.online? "remove" : "add"] ("offline")
+
+```
+
+## 0728 수업
+```javascript
+//모듈화 - 외부에서 접근불가
+var TODO = (function() {
+    function fadeIn() {
+
+        },
+    return {
+        "make" : function() {
+            ...
+        }, 
+        "delete": function() { //예약어를 이름으로 쓸때 이래 쓴다. 호출시엔 ['delete']이런식. 혹은 데이터로 주고받는다(valid한 JSON)할때 따옴표 쓴다.
+
+        } 
+    }
+})
+```
+- 클로져?!
+- jQuery attr vs prop
+    + attr는 실제 html태그에 있는 속성을 가져옴.
+    + prop은 현재상태
+
+
+## 140802
+```javascript
+//얘랑
+if(method === 'all') { // 삼항연산자로 해결
+    this.allView();
+} else if(method === 'active') {
+    this.activeView();
+} else if(method === 'completed') {
+    this.completedView();
+}
+
+//얘는 같다
+this[method+"View"]();
+```
