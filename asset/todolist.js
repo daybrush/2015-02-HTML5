@@ -1,53 +1,90 @@
 /*
-* week 5
+* week 4, 5
+* onlie offline 이벤트 추가하기
 * history 객체 관리하기
-   filters의 a 태그가 눌리면 그 해당 a tag만 selected되고, todo-list 에 클래스네임 바꾸기 - push state!
-   뒤로가기 했을 때, 해당 페이지로 잘 보여줌
-*/
+   filters 의 a 태그가 클릭되면, 
+   다른 a 태그는 클래스 지우고, 선택된 a 태그에만 selected 클래스를 넣는다.
+   투두 리스트에 해당 클래스를 넣는다. 
 
-var TODO = {
-	elTodoList: null,
+   뒤로가기 눌렸을 때 이벤트 catch해서 해당 page보여주고, push state.
+*   
+*/
+var TODOSync = {
+	address: "http://128.199.76.9:8002/KimDahye",
 
 	init: function() {
-		this.elTodoList = $("#todo-list");
+		$(window).on('online', this.onoffListener);
+		$(window).on('offline', this.onoffListener);
+	},
+
+	onoffListener: function() {
+		if(navigator.onLine){
+			$("#header").removeClass("offline");
+			// 클라이언트에 있는 자료 서버로 보내기. 
+		} else {
+			$("#header").addClass("offline");
+		}
+	},
+
+	get: function(callback) {
+		if(navigator.onLine){
+			var param = { method: "GET", url: this.address };
+			$.ajax(param).then(callback, this.alertAjaxFail);
+		} else {
+			//local storage에 저장
+		}
+	},
+
+	add: function(sTodo, callback) {
+		if(navigator.onLine){
+			var param = { method: "PUT", url: this.address, data: "todo=" + sTodo };
+			$.ajax(param).then(callback, this.alertAjaxFail);
+		} else {
+			//local storage에 저장
+		}	
+	},
+
+	complete: function(oParam, callback) {
+		if(navigator.onLine){
+			var param = { method: "POST", url: this.address + "/" + oParam.todoKey, data: "completed=" + oParam.complete };
+			$.ajax(param).then(callback, this.alertAjaxFail);
+		} else {
+			//local storage에 저장
+		}
+	},
+
+	remove: function(oParam, callback) {
+		if(navigator.onLine) {
+			var param = { method: "DELETE", url: this.address + "/" + oParam.todoKey };
+			$.ajax(param).then(callback, this.alertAjaxFail);
+		} else {
+
+		}
+	},
+
+	alertAjaxFail: function () { 
+		alert("데이터 전송이 실패했습니다. 다시 시도해주세요.");
+	}
+
+	//get, add, complete, remove 에 반복적으로 나오는 패턴은 online인지 확인하여 ajax, else이면 로컬에 저장 - 메소드로 뽑자. 
+};
+
+var TODO = {
+	init: function() {
 		this.get(); //여기에 있으면 반응속도가 너무 느린 것 같다... 한번에 투두가 확 보였으면 좋겠다...
 		$("#new-todo").on("keydown", this.add.bind(this));
-		this.elTodoList.on("click", "input", this.complete);
-		this.elTodoList.on("click", "button", this.startDeleteAnimation);
-		this.elTodoList.on("animationend", "li", this.remove);
+		var todoList = $("#todo-list");
+		todoList.on("click", "input", this.complete);
+		todoList.on("click", "button", this.startDeleteAnimation);
+		todoList.on("animationend", "li", this.remove);
 
-		$("#filters").on("click", "a", this.changeStateFilter.bind(this));
-		$(window).on("popstate", this.changeURLFilter.bind(this));
-		//popstate 가 발생하면, history의 top을 빼는 건가? 아니면 top을 빼지않고 top을 반환한 뒤, top = top-1 로 하는 건가? '앞으로' 가 가능한 걸 보면 후자인 것 같다...
+		$("#filters").on("click", "a", this.changeStateFilter);
+
 	},
 
-	changeURLFilter: function (ev) {
-		this.changeTodoState(history.state === null? "index.html" : history.state.method);
-	},
-
-	changeStateFilter: function (ev) {
+	changeStateFilter : function (ev) {
 		ev.preventDefault();
-		var selectedAnchor = $(ev.currentTarget);
-		var href = selectedAnchor.attr("href");
-
-		this.removeClassName("#filters a");
-		selectedAnchor.addClass("selected");
-		this.changeTodoState(href);
-	
-		// history.pushState({"method": href}, null, href); //에러 발생시킴: Failed to execute 'pushState' on 'History': A history state object with URL 'file:///Users/kimdahye/Workspace/NEXT/2015-02/2015-02-HTML5/active' cannot be created in a document with origin 'null'.
-		history.pushState({"method": href}, null, "#/"+href); //url이 이상하게 붙는다. 마지막 param은 떼고 붙여야 함...
-	},
-
-	changeTodoState: function(href) {
-		var todoList = this.elTodoList;
-		todoList.removeClass();
-		todoList.addClass(href === "index.html"? "" : "all-" + href);
-	},
-
-	removeClassName: function(selector) {
-		$.each($(selector), function(i, el) {
-			$(el).removeClass();
-		});
+		console.log($(ev.currentTarget).attr("href"));
 	},
 
 	get: function() {
@@ -60,27 +97,27 @@ var TODO = {
 		}.bind(this));
 	},	
 
-	add: function (ev) {
+	add : function (ev) {
 		var ENTER_KEYCODE = 13;
 		if(ev.keyCode === ENTER_KEYCODE) {
 			var sTodo = ev.target.value;
 			
 			TODOSync.add(sTodo, function(json) {
-				var todoList = this.makeTodoList({key: json.id, title: sTodo}); //TODO.todoList와 이름 겹친다. 바꿀 필요 있음
-				this.elTodoList.append(todoList);
+				var todoList = this.makeTodoList({key: json.id, title: sTodo});
+				$("#todo-list").append(todoList);
 				$("#new-todo").val("");
 			}.bind(this));
 		}
 	},
 
-	makeTodoList: function (oTodo) {
+	makeTodoList : function (oTodo) {
 		var source = $("#todo-template").html();
 		var template = Handlebars.compile(source);
 		var context = { completed:oTodo.completed, todoKey: oTodo.key, todoTitle: oTodo.title };
 		return template(context);
 	},
 
-	complete: function (ev) {
+	complete : function (ev) {
 		var input = ev.currentTarget;
 		var li = input.parentNode;
 		var oParam = {
@@ -88,11 +125,15 @@ var TODO = {
 			complete: input.checked? 1 : 0
 		}
 		TODOSync.complete(oParam, function(json){
-			li.className = (oParam.complete === 1)? "completed" : ""; //$(li)를 쓰면, 이게 removeClass한번 하고, addClass 한번하고 이렇게 두줄로 바뀌게 되는 건가?
+			if(oParam.complete === 1) {
+				li.className = "completed";
+			}else {
+				li.className = "";
+			}
 		});
 	},
 
-	startDeleteAnimation: function (ev) {
+	startDeleteAnimation : function (ev) {
 		var button = ev.currentTarget;
 		var li = button.parentNode.parentNode;
 		var oParam = {
@@ -103,7 +144,7 @@ var TODO = {
 		});
 	},
 
-	remove: function (ev) {
+	remove : function (ev) {
 		var li = ev.currentTarget;
 		if(li.className === "deleting"){
 			li.parentNode.removeChild(li);
