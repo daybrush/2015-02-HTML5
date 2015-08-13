@@ -4,6 +4,18 @@
 		<meta charset="utf-8">
 		<title>HTML5 Programming - 1 Class</title>
 		<link rel="stylesheet" href="asset/base.css">
+		<script type="text/javascript" src="lib/handlebars-v3.0.3.js"></script>
+		<script type="text/javascript" src="lib/jquery.min.js"></script>
+		<script id="entry-template" type="text/x-handlerbars-template">
+			<li class="{{checkCompleted}}">
+				<div class="view">
+					<input class="toggle" type="checkbox">
+					<input type="hidden" class="id" value="{{idNumber}}"/>
+					<label> {{target}} </label>
+					<button class="destroy"></button>
+				</div>
+			</li>
+		</script>
 	</head>
 	<body>
 		<section id="todoapp">
@@ -30,7 +42,7 @@
 					<li class="{}">
 						<div class="view">
 							<input class="toggle" type="checkbox" {}>
-							<label>타이틀</label>
+							<label>{{title}}</label>
 							<button class="destroy"></button>
 						</div>
 					</li>
