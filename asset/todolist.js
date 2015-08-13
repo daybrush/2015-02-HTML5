@@ -2,6 +2,14 @@
 // 오프라인일 때 헤더 엘리먼트에 오프라인 클래스 추가하고
 // 온라인일 때 헤더 엘리먼트에 오프라인 클래스 삭제
 
+//#todo-list엘리먼트에 active(complted)엘리먼트를 누르면
+// 1.todo-list에 all-active(complted)클래스를 추가하고
+// 2.기존 anchor에 selected class를 삭제하고
+// 3.anchor에 selected 클래스를 추가한다. 
+
+//동적으로 유아이를 UI를 변경 후 히스토리 추가(history.pushState({"method":"complete"}))
+//뒤로 가기 할 때 이벤트를 받아서 변경 
+
 //ajax
 var TODOSync = {
 
@@ -83,27 +91,74 @@ var TODOSync = {
 
 var TODO = {
 	ENTER_KEYCODE: 13,
+	selectedIndex: 0, 
 	init : function(){
 		
 		document.addEventListener('DOMContentLoaded', function(){
 			this.get();
 			document.getElementById('new-todo').addEventListener('keydown', this.add.bind(this));
+			this.initEventBind();
 			
 		}.bind(this));
 	},
 
 	initEventBind: function(){
 		document.getElementById("todo-list").addEventListener("click", this.eventFilter.bind(this));
-		document.getElementById("filters").addEventListener("click", this.changeStateFilter);
+		document.getElementById("filters").addEventListener("click", this.changeStateFilter.bind(this));
+		window.addEventListener("popstate", this.changeURLFilter.bind(this));
 	},
-	changeStateFilter: function(e){
+	changeURLFilter: function(e){
+		console.log(e.state.method);
+		if(e.state){
+			var method = e.state.method;
+			// if(method === "all"){
+			// 	this.allView();
+			// }else if(method === "active"){
+			// 	this.activeView();
+			// }else if(method === "completed"){
+			// 	this.completedView();
+			// }
+			this[method+"View"]();
+		}else{
+			this.allView();
+		}
+	},
+	changeStateFilter: function(e){		
 		var target = e.target;
 		var tagName = target.tagName.toLowerCase();
 		if(tagName =="a"){
 			var href = target.getAttribute("href");
-			console.log(href);
+			if(href === "index.html"){
+				this.allView();
+				history.pushState({"method":"all"}, null, "index.html");
+			}else if(href === "active"){
+				this.activeView();
+				history.pushState({"method":"active"}, null, "active");
+			}else if(href === "completed"){
+				this.completedView();
+				history.pushState({"method":"completed"}, null, "completed");
+			}
 		}
 		e.preventDefault();
+	},
+	allView: function(){
+		document.getElementById("todo-list").className = "";
+		this.selectedNavigator(0);
+	},
+	activeView: function(){
+		document.getElementById("todo-list").className = "all-active";
+		this.selectedNavigator(1);
+	},
+
+	completedView: function(){
+		document.getElementById("todo-list").className = "all-completed";
+		this.selectedNavigator(2);
+	},
+	selectedNavigator: function(index){
+		 var navigatorList = document.querySelectorAll('#filters a');
+		 navigatorList[this.selectedIndex].classList.remove('selected');
+		 navigatorList[index].classList.add('selected');
+		 this.selectedIndex = index;
 	},
 	eventFilter: function(e){
 		var ele = e.target;
