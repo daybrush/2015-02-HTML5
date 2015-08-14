@@ -1,9 +1,9 @@
 /* TODO
-* addSync 성공하면 front에서 data-id 값 update 해주기.
 * 불필요한 localstorage 확인, ajax 요청 있을 것 같다.
 * online 이벤트시에 get - update ...?
   * 는 양방향 watch 가 필요할 거 같으니까 pass.
 * TODOstorage.items 너무 취약. 바로 접근하지 말고 getItems()로 뭔가 처리해줘야.
+  * 다 비워지지 못 했을 때는 어쩌지..?
   * +, watching between localStorage - 데이터상의 items : object pattern?
 * synced/unsynced item에 따라 object를 아예 나누자.
 * on/offline 이벤트 외에, sync.ajax에서 실패시에도 storage에 저장.
@@ -99,6 +99,7 @@ TODOstorage = {
   add : function (sContents, callback) {
     var newId = TODOstorage.newItemPrefix+Date.now();
     TODOstorage.setProperty(newId, 'todo', sContents);
+    console.log('add', localStorage.items);
     callback({'insertId':newId});
   },
   complete : function (itemId, checked, callback) {
@@ -119,6 +120,8 @@ TODOstorage = {
       TODOstorage.setProperty(itemId, 'completed', checked);
     }
 
+    console.log('complete', localStorage.items);
+
     callback();
   },
   remove : function (itemId, callback) {
@@ -127,6 +130,9 @@ TODOstorage = {
     } else {
       TODOstorage.removeItem(itemId);
     }
+
+    console.log('remove', localStorage.items);
+
     callback();
   },
   dealItem : function(item, itemId) {
@@ -142,6 +148,8 @@ TODOstorage = {
       TODOsync.add(item.todo, function (data) {
         var prevItem = TODOstorage.getItem(itemId);
         TODOstorage.removeItem(itemId);
+        // TODO에서 .updateId 로 빼는 게 나을지도.
+        $('ul#todo-list li[data-id='+itemId+']').attr('data-id', data.insertId);
 
         delete prevItem.todo;
         console.log('todo', itemId, localStorage.items, prevItem, data);
