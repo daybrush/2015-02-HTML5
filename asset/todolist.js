@@ -1,7 +1,9 @@
 var TODOSync = {
+	myURL : "http://128.199.76.9:8002/030ii/",
+
 	get : function(callback) {
 		var xhr = new XMLHttpRequest();
-		xhr.open("GET", "http://128.199.76.9:8002/030ii/", true);
+		xhr.open("GET", this.myURL, true);
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
 		xhr.addEventListener("load", function(e) {
 			callback(JSON.parse(xhr.responseText))
@@ -11,7 +13,7 @@ var TODOSync = {
 
 	add : function(todo, callback) {
 		var xhr = new XMLHttpRequest();
-		xhr.open("PUT", "http://128.199.76.9:8002/030ii/", true);
+		xhr.open("PUT", this.myURL, true);
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
 		xhr.addEventListener("load", function(e) {
 			callback(JSON.parse(xhr.responseText))
@@ -21,7 +23,7 @@ var TODOSync = {
 	
 	completed : function(param, callback) {
 		var xhr = new XMLHttpRequest();
-		xhr.open("POST", "http://128.199.76.9:8002/030ii/" + param.key, true);
+		xhr.open("POST", this.myURL + param.key, true);
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
 		xhr.addEventListener("load", function(e) {
 			callback(JSON.parse(xhr.responseText))
@@ -31,7 +33,7 @@ var TODOSync = {
 	
 	remove : function(param, callback) {
 		var xhr = new XMLHttpRequest();
-		xhr.open("Delete", "http://128.199.76.9:8002/030ii/" + param.key, true);
+		xhr.open("Delete", this.myURL + param.key, true);
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
 		xhr.addEventListener("load", function(e) {
 			callback(JSON.parse(xhr.responseText))
