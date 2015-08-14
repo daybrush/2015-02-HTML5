@@ -110,24 +110,6 @@ TODO = {
     });
     e.preventDefault();
   },
-  filterInfo : {
-    'index.html' : {},
-    'active' : {'class':'all-active'},
-    'completed' : {'class':'all-completed'}
-  },
-  doFilter : function (e) {
-    var $prevSelected = $('#filters a.selected');
-    var $selected = $(this);
-    if ($selected.is($prevSelected)) { return; }
-
-    var $list = $('#todo-list');
-    $prevSelected.removeClass('selected');
-    $selected.addClass('selected');
-    $list.removeClass(TODO.filterInfo[$prevSelected.attr('href')]['class']);
-    $list.addClass(TODO.filterInfo[$selected.attr('href')]['class']);
-
-    e.preventDefault();
-  },
   bindEvent : function () {
     $('#new-todo').on('keypress', function(e) {
       var ENTER_KEYCODE = 13;
@@ -139,9 +121,54 @@ TODO = {
     });
     $('#todo-list').on('click', 'input.toggle', TODO.complete);
     $('#todo-list').on('click', 'li:not(.deleting) button.destroy', TODO.remove);
-    $('#filters a').on('click', TODO.doFilter);
+    $('#filters a').on('click', HistoryFilter.clickFilter);
+    $(window).on('popstate',HistoryFilter.popstateFilter);
   }
 };
+
+HistoryFilter = {
+  filterInfo : {
+    // Uncaught SecurityError: Failed to execute 'pushState' on 'History': A history state object with URL 'file:///2015-02-HTML5/active' cannot be created in a document with origin 'null'.
+    // 일단 로컬에서 개발용.
+    'index.html' : {'url':'index.html'},
+    'active' : {'class':'all-active','url':'#active'},
+    'completed' : {'class':'all-completed','url':'#completed'}
+    // 실제 서버 올리면 테스트.
+    // 'index.html' : {'url':'index.html'},
+    // 'active' : {'class':'all-active','url':'active'},
+    // 'completed' : {'class':'all-completed','url':'completed'}
+  },
+  clickFilter : function (e) {
+    var $prevSelected = $('#filters a.selected');
+    var $currentSelected = $(this);
+    var prevFilter = $prevSelected.attr('href');
+    var currentFilter = $currentSelected.attr('href');
+
+    if ($currentSelected.is($prevSelected)) { return; } // 같은 필터를 클릭했을 때는 무시.
+    HistoryFilter.changeView($currentSelected, currentFilter, $prevSelected, prevFilter);
+
+    history.pushState({'filter':currentFilter},null,HistoryFilter.filterInfo[currentFilter]['url']);
+    e.preventDefault();
+  },
+  popstateFilter : function (e) {
+    var currentFilter = e.originalEvent.state['filter'];
+    var $prevSelected = $('#filters a.selected');
+    var $currentSelected = $('#filters a[href="'+currentFilter+'"]');
+    var prevFilter = $prevSelected.attr('href');
+
+    if ($currentSelected.is($prevSelected)) { return; } // 같은 필터를 클릭했을 때는 무시.
+    HistoryFilter.changeView($currentSelected, currentFilter, $prevSelected, prevFilter);
+  },
+  changeView : function ($currentSelected, currentFilter, $prevSelected, prevFilter) {    
+    var $list = $('#todo-list');
+    $prevSelected.removeClass('selected');
+    $currentSelected.addClass('selected');
+    $list.removeClass(HistoryFilter.filterInfo[prevFilter]['class']);
+    console.log('filter : '+currentFilter);
+    console.log('class : '+HistoryFilter.filterInfo[currentFilter]['class']);
+    $list.addClass(HistoryFilter.filterInfo[currentFilter]['class']);
+  },
+}
 
 
 $(document).ready(function () {
