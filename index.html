@@ -8,7 +8,7 @@
 		
 		<script type="text/javascript" src="asset/handlebars-v3.0.3.js"></script>
 		<script id="todo-template" type="text/x-handlebars-template">
-			<li class="{}">
+			<li class="{{completed}}" data-key="{{key}}">
 				<div class="view">
 					<input class="toggle" type="checkbox" {}>
 					<label>{{todoName}}</label>
