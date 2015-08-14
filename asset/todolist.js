@@ -98,7 +98,7 @@ TODO = {
       $cachedLi.on('webkitTransitionEnd transitionend', remove);
     });
   },
-  complete : function ($item, $event) {
+  complete : function ($item) {
     var itemId = $item.closest('li').data('id');
     var checked = $item.is(':checked');
     
@@ -106,8 +106,28 @@ TODO = {
       $item.prop("checked", checked);
       $item.closest('li').toggleClass('completed', checked);
     });
+  },
+  doFilter : function (href, $selected) {
+    var $list = $('#todo-list');
+    var prevSelected = $('#filters a.selected');
+    if (!$selected.is(prevSelected)) {
+      prevSelected.removeClass('selected');
+      $selected.addClass('selected');
+    }
 
-    $event.preventDefault();
+    switch(href) {
+      case 'index.html' :
+        $list.removeClass('all-completed all-active');
+        break;
+      case 'active' :
+        $list.addClass('all-active');
+        $list.removeClass('all-completed');
+        break;
+      case 'completed' :
+        $list.addClass('all-completed');
+        $list.removeClass('all-active');
+        break;
+    }
   },
   bindEvent : function () {
     $('#new-todo').on('keypress', function(e) {
@@ -119,10 +139,15 @@ TODO = {
       $('#new-todo').val('');
     });
     $('#todo-list').on('click', 'input.toggle', function(e) {
-      TODO.complete($(this), e);
+      TODO.complete($(this));
+      e.preventDefault();
     });
     $('#todo-list').on('click', 'li:not(.deleting) button.destroy', function() {
       TODO.remove($(this).closest('li'));
+    });
+    $('#filters a').on('click', function(e) {
+      TODO.doFilter($(this).attr('href'), $(this));
+      e.preventDefault();
     });
   }
 };

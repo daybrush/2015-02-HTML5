@@ -99,3 +99,10 @@ template 라이브러리를 찾아보고 적용하기
   * css animation main thread / compositor thrmead
 * css vendor prefix
 * on('webkitTransitionEnd transitionend') : 이벤트 두개에 각각.
+
+
+
+- fn.bind(context, arg1, arg2, ...) # https://github.com/helloheesu/2015-02-HTML5/blob/master/asset/todolist.js#L122
+- promise, when, deferred, thenable object
+- web worker!
+- $.extend(userOption, options) (::= java extends) vs. prototype chaining
