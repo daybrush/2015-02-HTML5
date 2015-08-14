@@ -7,7 +7,6 @@
   * +, watching between localStorage - 데이터상의 items : object pattern?
 * synced/unsynced item에 따라 object를 아예 나누자.
 * on/offline 이벤트 외에, sync.ajax에서 실패시에도 storage에 저장.
-* typeof(a) 말고 typeof a.
 * promise pattern!
 */
 
@@ -39,8 +38,8 @@ TODOsync = {
     });
   },
   complete : function (itemId, checked, callback) {
-    if(typeof(itemId) === "undefined") {console.error("itemId not defined"); return;}
-    if(typeof(checked) === "undefined") {console.error("checked not defined"); return;}
+    if(typeof itemId === "undefined") {console.error("itemId not defined"); return;}
+    if(typeof checked === "undefined") {console.error("checked not defined"); return;}
     checked = (checked) ? 1 : 0;
 
     TODOsync.ajax({
