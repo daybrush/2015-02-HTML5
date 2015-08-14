@@ -1,9 +1,22 @@
 var TODOSync = {
-	myURL : "http://128.199.76.9:8002/030ii/",
+//	myURL : "http://128.199.76.9:8002/030ii/",
+
+	url : "http://128.199.76.9:8002/",
+	id : "030ii",
+
+	init : function() {
+		window.addEventListener("online", this.onofflineListener);
+		window.addEventListener("offline", this.onofflineListener);
+	},
+
+	onofflineListener : function() {
+		document.getElementById("header").classList[navigator.onLine?"remove":"add"]("offline");
+		
+	},
 
 	get : function(callback) {
 		var xhr = new XMLHttpRequest();
-		xhr.open("GET", this.myURL, true);
+		xhr.open("GET", this.url+this.id, true);
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
 		xhr.addEventListener("load", function(e) {
 			callback(JSON.parse(xhr.responseText))
@@ -13,7 +26,7 @@ var TODOSync = {
 
 	add : function(todo, callback) {
 		var xhr = new XMLHttpRequest();
-		xhr.open("PUT", this.myURL, true);
+		xhr.open("PUT", tthis.url+this.id, true);
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
 		xhr.addEventListener("load", function(e) {
 			callback(JSON.parse(xhr.responseText))
@@ -23,7 +36,7 @@ var TODOSync = {
 	
 	completed : function(param, callback) {
 		var xhr = new XMLHttpRequest();
-		xhr.open("POST", this.myURL + param.key, true);
+		xhr.open("POST", this.url+this.id + param.key, true);
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
 		xhr.addEventListener("load", function(e) {
 			callback(JSON.parse(xhr.responseText))
@@ -33,7 +46,7 @@ var TODOSync = {
 	
 	remove : function(param, callback) {
 		var xhr = new XMLHttpRequest();
-		xhr.open("Delete", this.myURL + param.key, true);
+		xhr.open("Delete", this.url+this.id + param.key, true);
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
 		xhr.addEventListener("load", function(e) {
 			callback(JSON.parse(xhr.responseText))
@@ -43,6 +56,8 @@ var TODOSync = {
 }
 
 var TODO = {
+	selectedIndex : 0,
+
 	init : function(){
 		document.addEventListener("DOMContentLoaded", function(){
 			this.get();
@@ -56,6 +71,65 @@ var TODO = {
 				}
 			}.bind(this));
 		}.bind(this));
+	},
+
+	initEventBind : function(){
+		document.getElementById("todo-list").addEventListener("click", this.eventFilter.bind(this));
+		document.getElementById("filters").addEventListener("click", this.changeStateFilter.bind(this));
+		window.addEventListener("popstate", this.changeURLFilter.bind(this));
+	},
+
+	changeURLFilter : function(e) { 
+		if(e.state) {
+			var method = e.state.method;
+			this[method+"View"]();
+		} else {
+			this.allView();
+		}
+	},
+
+	changeStateFilter : function(e) {
+		var target = e.target;
+		var tagName = target.tagName.toLowerCase();
+		if(tagName == "a") {
+			var href = target.getAttribute("href");
+			if(href === "index.html") {
+				this.allView();
+				history.pushState({"method":"all"},null,"index.html");
+			} else if(href === "active") {
+				this.activeView();
+				history.pushState({"method":"active"},null,"active");
+			} else if(href === "completed") {
+				this.completedView();
+				history.pushState({"method":"completed"},null,"completed");
+			}
+		}
+		e.preventDefault(); 
+	},
+
+	allView : function() {
+		document.getElementById("todo-list").className = "";
+		this.selectedNavigator(0);
+		
+	},
+	activeView : function() {
+		document.getElementById("todo-list").className = "all-active";
+		this.selectedNavigator(1);
+	},
+	completedView : function() {
+		document.getElementById("todo-list").className = "all-completed";
+		this.selectedNavigator(2);
+	},
+	selectedNavigator : function(index) {
+		var navigatorList = document.querySelectorAll("#filters a");
+		navigatorList[this.selectedIndex].classList.remove("selected");
+		navigatorList[index].classList.add("selected"); 
+		this.selectedIndex = index;
+	},
+
+	onofflineListener: function(){
+		document.getElementById("header").classList[navigator.onLine?"remove":"add"]("offline");
+	
 	},
 
 	get : function(){
@@ -77,6 +151,7 @@ var TODO = {
 
 		return todoTemplate;
 	},
+
 
 	add : function(e){
 		var ENTER_KEYCODE = 13;
