@@ -1,6 +1,6 @@
 /* TODO
-* unsynced item, add 후에 id update 해서 다시 처리.
 * addSync 성공하면 front에서 data-id 값 update 해주기.
+* 불필요한 localstorage 확인, ajax 요청 있을 것 같다.
 * online 이벤트시에 get - update ...?
   * 는 양방향 watch 가 필요할 거 같으니까 pass.
 * TODOstorage.items 너무 취약. 바로 접근하지 말고 getItems()로 뭔가 처리해줘야.
@@ -140,9 +140,12 @@ TODOstorage = {
     }
     if ('todo' in item) {
       TODOsync.add(item.todo, function (data) {
-        TODOstorage.removeProperty(itemId, 'todo');
-        console.log('todo', itemId, localStorage.items);
-        TODOstorage.dealItem(item, itemId);
+        var prevItem = TODOstorage.getItem(itemId);
+        TODOstorage.removeItem(itemId);
+
+        delete prevItem.todo;
+        console.log('todo', itemId, localStorage.items, prevItem, data);
+        TODOstorage.dealItem(prevItem, data.insertId);
       });
       return;
     }
