@@ -11,22 +11,25 @@ var TODOSync = {
 
 	onofflineListener : function() {
 		document.getElementById("header").classList[navigator.onLine?"remove":"add"]("offline");
-		
 	},
 
 	get : function(callback) {
-		var xhr = new XMLHttpRequest();
-		xhr.open("GET", this.url+this.id, true);
-		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
-		xhr.addEventListener("load", function(e) {
-			callback(JSON.parse(xhr.responseText))
-		});
-		xhr.send();
+		//if(navigator.onLine){
+			var xhr = new XMLHttpRequest();
+			xhr.open("GET", this.url+this.id+'/', true);
+			xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
+			xhr.addEventListener("load", function(e) {
+				callback(JSON.parse(xhr.responseText))
+			});
+			xhr.send();
+		//} else {
+			// data를 클라이언트에 저장 
+		//}
 	},
 
 	add : function(todo, callback) {
 		var xhr = new XMLHttpRequest();
-		xhr.open("PUT", tthis.url+this.id, true);
+		xhr.open("PUT", this.url+this.id+'/', true);
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
 		xhr.addEventListener("load", function(e) {
 			callback(JSON.parse(xhr.responseText))
@@ -36,7 +39,7 @@ var TODOSync = {
 	
 	completed : function(param, callback) {
 		var xhr = new XMLHttpRequest();
-		xhr.open("POST", this.url+this.id + param.key, true);
+		xhr.open("POST", this.url+this.id+'/' + param.key, true);
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
 		xhr.addEventListener("load", function(e) {
 			callback(JSON.parse(xhr.responseText))
@@ -46,7 +49,7 @@ var TODOSync = {
 	
 	remove : function(param, callback) {
 		var xhr = new XMLHttpRequest();
-		xhr.open("Delete", this.url+this.id + param.key, true);
+		xhr.open("Delete", this.url+this.id+'/' + param.key, true);
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
 		xhr.addEventListener("load", function(e) {
 			callback(JSON.parse(xhr.responseText))
@@ -61,6 +64,8 @@ var TODO = {
 	init : function(){
 		document.addEventListener("DOMContentLoaded", function(){
 			this.get();
+			document.getElementById("filters").addEventListener("click", this.changeStateFilter.bind(this));
+			window.addEventListener("popstate", this.changeURLFilter.bind(this));
 			document.getElementById("new-todo").addEventListener("keydown", this.add.bind(this)); // keypress로 해도됨! 
 			document.getElementById("todo-list").addEventListener("click", function(e){
 				if(e.target.className == "toggle"){
@@ -71,12 +76,6 @@ var TODO = {
 				}
 			}.bind(this));
 		}.bind(this));
-	},
-
-	initEventBind : function(){
-		document.getElementById("todo-list").addEventListener("click", this.eventFilter.bind(this));
-		document.getElementById("filters").addEventListener("click", this.changeStateFilter.bind(this));
-		window.addEventListener("popstate", this.changeURLFilter.bind(this));
 	},
 
 	changeURLFilter : function(e) { 
@@ -112,24 +111,22 @@ var TODO = {
 		this.selectedNavigator(0);
 		
 	},
+
 	activeView : function() {
 		document.getElementById("todo-list").className = "all-active";
 		this.selectedNavigator(1);
 	},
+
 	completedView : function() {
 		document.getElementById("todo-list").className = "all-completed";
 		this.selectedNavigator(2);
 	},
+
 	selectedNavigator : function(index) {
 		var navigatorList = document.querySelectorAll("#filters a");
 		navigatorList[this.selectedIndex].classList.remove("selected");
 		navigatorList[index].classList.add("selected"); 
 		this.selectedIndex = index;
-	},
-
-	onofflineListener: function(){
-		document.getElementById("header").classList[navigator.onLine?"remove":"add"]("offline");
-	
 	},
 
 	get : function(){
@@ -201,5 +198,30 @@ var TODO = {
 	}
 };
 
+TODOSync.init();
 TODO.init();
 
+
+// 서버 키는 방법 
+// 터미널에서 python -m SimpleHTTPServer 8000
+// localhost:8000 으로 접속 
+
+
+// 참고 사이트 => http://ohgyun.com/417
+
+ //    window.addEventListener('storage', function (evt) {
+ //      // evt = 이벤트 객체 (evt의 속성으로 => key, oldValue, newValue, url 등이 있음 )
+ //    }, false);
+
+ //    localStorage.setItem('foo', 'bar');
+ //    localStorage.getItem('foo'); //--> "bar" 
+ //    // 모두 string 타입으로 저장된다 
+
+ //    localStorage.removeItem(키); // 해당 키를 지운다.
+ //    localStorage.clear(); // 모두 지운다.
+
+ //    // 데이터가 removeItem()에 의해 삭제되었다면, newValue 값엔 null이 할당되고,
+	// // clear()로 모든 데이터가 삭제되었다면, key에는 공백 문자열('')이, value에는 각각 null이 할당된다.
+
+ //    localStorage.length; // 저장된 키의 개수
+ //    localStorage.key(값); // 값으로 키를 찾는다.
