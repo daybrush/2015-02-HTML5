@@ -1,13 +1,12 @@
 var DOSync = {
 	URL : "http://128.199.76.9:8002/tminlim",
-
-//get all lists
+	
 	getTo : function(callback){
 		var xhr = new XMLHttpRequest();
 		xhr.open("GET", this.URL ,true);
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8");
 		xhr.addEventListener("load", function(e){
-			callback(xhr.responseText);
+			var needAtr = ["id","todo","completed"];/*completed: 0 id: 2345 todo: "asdf"*/					callback(JSON.parse(JSON.stringify(JSON.parse(xhr.responseText), needAtr)));
 		});
 		xhr.send(null);	
 	},
@@ -30,7 +29,6 @@ var DOSync = {
 			callback(JSON.parse(xhr.responseText));
 		});
 		xhr.send("completed=" + checkedLi.isCompleted);	
-		
 	},
 
 	deleteTo :function(deletedLi, callback){
@@ -56,49 +54,51 @@ var DO = {
 		this.todoLists.addEventListener('click', this.checkingCompletedTo);
 		this.todoLists.addEventListener('click', this.deleteTo);
 		
-/* 		this.getTo(); */
+		this.getTo();
 	},
 	
 	getTo : function(){
-	var that = this;
+		DOSync.getTo(function(allTodoLists){			
+			var attachableLists = document.createDocumentFragment();
+			this.cacheAllLists(attachableLists, allTodoLists);
+			this.todoLists.appendChild(attachableLists);
 
-		DOSync.getTo(function(allTodolist){
-			var list = JSON.parse(allTodolist);
-			for(var i = list.length-1;i>=0;i--){
-				var newCompleted = that.eleCompleted.cloneNode(true);	
-				var labelTxt= newCompleted.querySelector("div.view>label");
-				labelTxt.innerHTML=list[i].todo;
-/* 				style  */
-				newCompleted.style.display="block";
-				newCompleted.style.transition="opacity 0.5s ease-in";
-				newCompleted.style.opacity="1";
-				that.todoLists.insertAdjacentElement("beforeEnd", newCompleted);
-			}
-		});
-
-		
+		}.bind(this));
 	},
 	
-/* {"id":8446,"todo":"ASDF","nickname":"tminlim","completed":1,"date":"2015-08-13T22:44:31.000Z"}, */
-/*
-<li class="added" data-id-todo="8485" style="display: block; transition: opacity 0.5s ease-in; opacity: 1;">
-	<div class="view">
-		<input class="toggle" type="checkbox" {}="">
-		<label>sadf</label>
-		<button class="destroy"></button>
-	</div>
-</li>
-*/
+	cacheAllLists : function(blankElement, data){
+		var sLists = '';
+		
+		for(var i = 0, len = data.length; i < len; i++){
+			var eachEle = data[i];
+			var newElement = this.eleCompleted.cloneNode(true);
+			
+			if(eachEle.completed != 0){
+				newElement.classList.add("completed");
+				newElement.querySelector("input").checked = true;
+			}
+			
+			newElement.dataset.idTodo = eachEle.id;
+			newElement.querySelector(".view label").innerHTML = eachEle.todo;
+			newElement.style.transition = "opacity 0.5s ease-in";
+			newElement.style.opacity = 1;
+			newElement.style.display = "block";
+
+			blankElement.appendChild(newElement);
+		}
+	},
 		
 	makeTo : function(evt){
 		var sTxt = this.txtInput.value;
 		
 		if((evt.keyCode == this.ENTER_KEYCODE) && (sTxt != "")){
 			DOSync.addTo(sTxt, function(addTodo){
-				console.log(addTodo);
+				console.log("just added !" + addTodo);
 				var newCompleted = this.copyLi(sTxt, addTodo)
-				this.todoLists.insertAdjacentElement('beforeend', newCompleted);
-		
+				
+				this.todoLists.insertAdjacentElement('afterbegin', newCompleted);
+				newCompleted.style.display = "block";	
+
 				this.fadeIn(newCompleted, 0.5);
 				this.txtInput.value = "";				
 			}.bind(this));
@@ -109,26 +109,24 @@ var DO = {
 		var newElement = this.eleCompleted.cloneNode(true);
 		newElement.dataset.idTodo = dataSource.insertId;
 		newElement.querySelector(".view label").innerHTML = sTxt;
-		newElement.style.display = "block";	
 		return newElement;	
 	},
 	
 	fadeIn : function(ele, secondTerm){
 		ele.offsetHeight;
 		ele.style.transition = "opacity " + secondTerm + "s ease-in";
-		ele.style.opacity = 1;		
+		ele.style.opacity = 1;
 	},
 	 
 	checkingCompletedTo : function(evt){
 		if(evt.target.tagName == "INPUT"){
 		 var checkedLi = evt.target.parentNode.parentNode;
 		 var isCompleted = (checkedLi.childNodes[1].childNodes[1].checked)?"1":"0";
-					DOSync.completedTo({"idTodo" :checkedLi.dataset.idTodo, "isCompleted" : isCompleted},
-						function(){
-							checkedLi.classList.toggle("completed")
-						});
-		}
-					
+			DOSync.completedTo({"idTodo" :checkedLi.dataset.idTodo, "isCompleted" : isCompleted},
+				function(){
+					checkedLi.classList.toggle("completed")
+				});
+		}				
 	},
 	
 	deleteTo : function(evt){
@@ -138,8 +136,8 @@ var DO = {
 		if(evt.target.tagName == "BUTTON"){
 			var clickedList = evt.target.parentNode.parentNode;
 			DOSync.deleteTo({"deleteId":clickedList.dataset.idTodo}, function(deleteTodo){
-				console.log(deleteTodo);
-/* 				console.log(JSON.stringfy(rs)); JSON.parse 객체로 넘겨서 문자열로 왜 안찍힐까 */
+				console.log("deleted!" + deleteTodo);
+				
 				var startOpacity = 1;
 				var startTime = null;
 				
@@ -154,7 +152,6 @@ var DO = {
 						requestAnimationFrame(tickTok);
 					} else 
 						clickedList.parentNode.removeChild(clickedList);	
-		
 				};
 				requestAnimationFrame(tickTok);
 			})
@@ -165,4 +162,3 @@ var DO = {
 document.addEventListener("DOMContentLoaded", function(){
 	DO.init();
 })
-
