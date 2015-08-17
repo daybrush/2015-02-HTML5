@@ -1,3 +1,15 @@
+/* TODO
+* 불필요한 localstorage 확인, ajax 요청 있을 것 같다.
+* online 이벤트시에 get - update ...?
+  * 는 양방향 watch 가 필요할 거 같으니까 pass.
+* TODOstorage.items 너무 취약. 바로 접근하지 말고 getItems()로 뭔가 처리해줘야.
+  * 다 비워지지 못 했을 때는 어쩌지..?
+  * +, watching between localStorage - 데이터상의 items : object pattern?
+* synced/unsynced item에 따라 object를 아예 나누자.
+* on/offline 이벤트 외에, sync.ajax에서 실패시에도 storage에 저장.
+* promise pattern!
+*/
+
 TODOsync = {
   URL : "http://128.199.76.9:8002",
   nickname : "helloheesu",
@@ -26,7 +38,8 @@ TODOsync = {
     });
   },
   complete : function (itemId, checked, callback) {
-    if(typeof(checked) === "undefined") {console.error("checked not defined"); return;}
+    if(typeof itemId === "undefined") {console.error("itemId not defined"); return;}
+    if(typeof checked === "undefined") {console.error("checked not defined"); return;}
     checked = (checked) ? 1 : 0;
 
     TODOsync.ajax({
@@ -45,92 +58,264 @@ TODOsync = {
   }
 };
 
+TODOstorage = {
+  // window.localStorage 는 무조건 존재한다고 가정....
+  items : null,
+  newItemPrefix : 'new',
+  init : function () {
+    var prevItems = window.localStorage.getItem('items');
+    if (prevItems) {
+      TODOstorage.items = JSON.parse(window.localStorage.getItem('items'));
+    } else {
+      TODOstorage.items = {};
+      window.localStorage.setItem('items', JSON.stringify(TODOstorage.items));
+    }
+  },
+  setProperty : function (id, key, value) {
+    if (!TODOstorage.items[id]) {
+      TODOstorage.items[id] = {};
+    }
+    TODOstorage.items[id][key] = value;
+    window.localStorage.setItem('items', JSON.stringify(TODOstorage.items));
+  },
+  getProperty : function (id, key) {
+    return TODOstorage.items[id][key];
+  },
+  removeProperty : function (id, key) {
+    delete TODOstorage.items[id][key];
+    window.localStorage.setItem('items', JSON.stringify(TODOstorage.items));
+  },
+  removeItem : function (id) {
+    delete TODOstorage.items[id];
+    window.localStorage.setItem('items', JSON.stringify(TODOstorage.items));
+  },
+  getItem : function (id) {
+    return TODOstorage.items[id];
+  },
+  get : function (callback) {
+    // do nothing
+  },
+  add : function (sContents, callback) {
+    var newId = TODOstorage.newItemPrefix+Date.now();
+    TODOstorage.setProperty(newId, 'todo', sContents);
+    console.log('add', localStorage.items);
+    callback({'insertId':newId});
+  },
+  complete : function (itemId, checked, callback) {
+    if(typeof checked !== "boolean") {console.error("checked:", checked, "is not boolean"); return;}
+
+    /* 가능한 case
+    * synced item
+      * new push(undefined in items) : TODOstorage.getItem(itemId) 검사해야함. 오류방지.
+      * complete을 처음 바꾸는 경우 declare, 다시 바꾸는(돌리는) 경우 removeItem.
+        * removeProperty로 함수를 통일하고, sync에서 처리.
+    * unsynced item
+      * new push - 불가. add를 반드시 거침. : TODOstorage.getItem(itemId) 무조건 통과.
+      * complete을 on하는 경우 declare, off의 경우 무조건 removeProperty.
+    */
+    if(TODOstorage.getItem(itemId) && typeof TODOstorage.getProperty(itemId, 'completed') === "boolean") {
+      TODOstorage.removeProperty(itemId, 'completed');
+    } else {
+      TODOstorage.setProperty(itemId, 'completed', checked);
+    }
+
+    console.log('complete', localStorage.items);
+
+    callback();
+  },
+  remove : function (itemId, callback) {
+    if (typeof itemId === "number" || itemId.indexOf(TODOstorage.newItemPrefix) < 0) {
+      TODOstorage.setProperty(itemId, 'remove', true);
+    } else {
+      TODOstorage.removeItem(itemId);
+    }
+
+    console.log('remove', localStorage.items);
+
+    callback();
+  },
+  dealItem : function(item, itemId) {
+    // 순서대로 검사, 있으면 그 하나만 실행하고 종료. 더 깔끔한 방법 없나.
+    if ('remove' in item) {
+      TODOsync.remove(itemId, function(){
+        TODOstorage.removeItem(itemId);
+        console.log('remove', itemId, localStorage.items);
+      });
+      return;
+    }
+    if ('todo' in item) {
+      TODOsync.add(item.todo, function (data) {
+        var prevItem = TODOstorage.getItem(itemId);
+        TODOstorage.removeItem(itemId);
+        // TODO에서 .updateId 로 빼는 게 나을지도.
+        $('ul#todo-list li[data-id='+itemId+']').attr('data-id', data.insertId);
+
+        delete prevItem.todo;
+        console.log('todo', itemId, localStorage.items, prevItem, data);
+        TODOstorage.dealItem(prevItem, data.insertId);
+      });
+      return;
+    }
+    if ('completed' in item) {
+      TODOsync.complete(itemId, item.completed, function () {
+        TODOstorage.removeItem(itemId); // complete 외에는 '수정'할 property가 없다고 가정.
+        console.log('completed', itemId, localStorage.items);
+      });
+      return;
+    }
+    TODOstorage.removeItem(itemId);
+    console.log('none', itemId, localStorage.items);
+  },
+  sync : function () {
+    for (var itemId in TODOstorage.items) {
+      var item = TODOstorage.items[itemId];
+      TODOstorage.dealItem(item, itemId);
+    }
+  }
+};
+
 TODO = {
   item : null,
   board : null,
+  syncmanager : TODOsync,
   template : function(){},
-};
-TODO.init = function () {
-  TODO.item = $('#new-item-script');
-  TODO.board = $('#todo-list');
-  TODO.template = Handlebars.compile(TODO.item.html());
+  init : function () {
+    TODO.item = $('#new-item-script');
+    TODO.board = $('#todo-list');
+    TODO.template = Handlebars.compile(TODO.item.html());
 
-  TODO.get();
-};
-TODO.addItem = function (sContents) {
-  TODOsync.add(sContents, function (data) {
-    var elNewItem = $(TODO.template({'item':{
-      'todo':sContents,
-      'id':data.insertId
-    }}));
-    TODO.board.append(elNewItem);
-    elNewItem.css('opacity', 0);
-    elNewItem.css('opacity');
-    elNewItem.css('opacity', 1);
-  });
-};
-TODO.get = function () {
-  TODOsync.get(function (data) {
-    data.sort(function (a, b) {
-      if(a.id < b.id)
-        return -1;
-      else if(a.id > b.id)
-        return 1;
-      else
-        return 0;
+    TODO.bindEvent();
+    TODO.get();
+
+    TODOstorage.init();
+  },
+  onofflineHandler : function () {
+    if (navigator.onLine) {
+      TODO.syncmanager = TODOsync;
+      $('#header').removeClass('offline');
+      TODOstorage.sync();
+    } else {
+      TODO.syncmanager = TODOstorage;
+      $('#header').addClass('offline');
+    }
+  },
+  add : function (sContents) {
+    TODO.syncmanager.add(sContents, function (data) {
+      var elNewItem = $(TODO.template({'item':{
+        'todo':sContents,
+        'id':data.insertId
+      }}));
+      TODO.board.append(elNewItem);
+      elNewItem.css('opacity', 0);
+      elNewItem.css('opacity');
+      elNewItem.css('opacity', 1);
     });
-    TODO.board.append(TODO.template({item:data}));
-  })
-};
-TODO.removeItem = function ($cachedLi) {
-  if (!$cachedLi) return;
-  var itemId = $cachedLi.data('id');
+  },
+  get : function () {
+    TODO.syncmanager.get(function (data) {
+      data.sort(function (a, b) {
+        if(a.id < b.id) {return -1;}
+        else if(a.id > b.id) {return 1;}
+        else {return 0;}
+      });
+      TODO.board.append(TODO.template({item:data}));
+    })
+  },
+  remove : function () {
+    var $cachedLi = $(this).closest('li');
+    if (!$cachedLi) {return;}
+    var itemId = $cachedLi.data('id');
 
-  TODOsync.remove(itemId, function () {
-    $cachedLi.css({
-      'opacity': 0,
-      'maxHeight': 0,
-      'overflow': 'hidden'
+    TODO.syncmanager.remove(itemId, function () {
+      $cachedLi.css({
+        'opacity': 0,
+        'max-height': 0,
+        'overflow': 'hidden'
+      });
+      var remove = function (event) {
+        if (event.eventPhase !== 2) {
+          return;
+        }
+        $cachedLi.remove();
+      };
+      $cachedLi.on('webkitTransitionEnd transitionend', remove);
     });
-    var removeItem = function (event) {
-      if (event.eventPhase !== 2) {
-        // li 자신이 아니라 button 등 자식들에 의해 bubbling 받은 거면 무시.
-        ////////// 더 좋은방식은 없나 애초에 자기자신 이벤트만 받는거 같은?
-        return;
-      }
-      $cachedLi.off('webkitTransitionEnd transitionend', removeItem);
-      $cachedLi.remove();
-    };
-    $cachedLi.on('webkitTransitionEnd transitionend', removeItem);
-  });
+  },
+  complete : function (e) {
+    var $item = $(this);
+    var itemId = $item.closest('li').data('id');
+    var checked = $item.is(':checked');
+    
+    TODO.syncmanager.complete(itemId, checked, function () {
+      $item.prop("checked", checked);
+      $item.closest('li').toggleClass('completed', checked);
+    });
+    // e.preventDefault(); // 어차피 안 먹는다??
+    // 성공하기 전까지는 checked 속성이 바뀌지 않았으면 했는데.
+    // 심지어, TODOstorage.complete()에서 callback 부른 후에 깨지게(checked는 안바뀌고 complete만 바뀜) 만듦.
+    // 이 줄 없애니까 잘 됨.
+  },
+  bindEvent : function () {
+    $('#new-todo').on('keypress', function(e) {
+      var ENTER_KEYCODE = 13;
+      if(e.which !== ENTER_KEYCODE) {return;}
+      var sContents = $('#new-todo').val();
+      if(!sContents) {return;}
+      TODO.add(sContents);
+      $('#new-todo').val('');
+    });
+    $('#todo-list').on('click', 'input.toggle', TODO.complete);
+    $('#todo-list').on('click', 'li:not(.deleting) button.destroy', TODO.remove);
+    $('#filters a').on('click', HistoryFilter.clickFilter);
+    $(window).on('popstate',HistoryFilter.popstateFilter);
+    $(window).on('online offline',TODO.onofflineHandler);
+  }
 };
-TODO.completeItem = function ($item, $event) {
-  var itemId = $item.closest('li').data('id');
-  var checked = $item.is(':checked');
-  
-  TODOsync.complete(itemId, checked, function () {
-    $item.prop("checked", checked);
-    $item.closest('li').toggleClass('completed', checked);
-  });
 
-  $event.preventDefault();
+HistoryFilter = {
+  filterInfo : {
+    // Uncaught SecurityError: Failed to execute 'pushState' on 'History': A history state object with URL 'file:///2015-02-HTML5/active' cannot be created in a document with origin 'null'.
+    // 일단 로컬에서 개발용.
+    'index.html' : {'url':'index.html'},
+    'active' : {'class':'all-active','url':'#active'},
+    'completed' : {'class':'all-completed','url':'#completed'}
+    // 실제 서버 올리면 테스트.
+    // 'index.html' : {'url':'index.html'},
+    // 'active' : {'class':'all-active','url':'active'},
+    // 'completed' : {'class':'all-completed','url':'completed'}
+  },
+  clickFilter : function (e) {
+    var $prevSelected = $('#filters a.selected');
+    var $currentSelected = $(this);
+    var prevFilter = $prevSelected.attr('href');
+    var currentFilter = $currentSelected.attr('href');
+
+    if ($currentSelected.is($prevSelected)) { return; } // 같은 필터를 클릭했을 때는 무시.
+    HistoryFilter.changeView($currentSelected, currentFilter, $prevSelected, prevFilter);
+
+    history.pushState({'filter':currentFilter},null,HistoryFilter.filterInfo[currentFilter]['url']);
+    e.preventDefault();
+  },
+  popstateFilter : function (e) {
+    var currentFilter = e.originalEvent.state['filter'];
+    var $prevSelected = $('#filters a.selected');
+    var $currentSelected = $('#filters a[href="'+currentFilter+'"]');
+    var prevFilter = $prevSelected.attr('href');
+
+    if ($currentSelected.is($prevSelected)) { return; } // 같은 필터를 클릭했을 때는 무시.
+    HistoryFilter.changeView($currentSelected, currentFilter, $prevSelected, prevFilter);
+  },
+  changeView : function ($currentSelected, currentFilter, $prevSelected, prevFilter) {    
+    var $list = $('#todo-list');
+    $prevSelected.removeClass('selected');
+    $currentSelected.addClass('selected');
+    $list.removeClass(HistoryFilter.filterInfo[prevFilter]['class']);
+    console.log('filter : '+currentFilter);
+    console.log('class : '+HistoryFilter.filterInfo[currentFilter]['class']);
+    $list.addClass(HistoryFilter.filterInfo[currentFilter]['class']);
+  },
 };
 
 $(document).ready(function () {
   TODO.init();
-  $('#new-todo').on('keypress', function(event) {
-    var ENTER_KEYCODE = 13;
-    if(event.which === ENTER_KEYCODE) {
-      var sContents = $('#new-todo').val();
-      if(!sContents) return;
-      TODO.addItem(sContents);
-      $('#new-todo').val('');
-    }
-  });
-  $('#todo-list').on('click', 'input.toggle', function(e) {
-    TODO.completeItem($(this), e);
-  });
-  $('#todo-list').on('click', 'li:not(.deleting) button.destroy', function() {
-    TODO.removeItem($(this).closest('li'));
-  });
 });

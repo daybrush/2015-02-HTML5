@@ -99,3 +99,7 @@ template 라이브러리를 찾아보고 적용하기
   * css animation main thread / compositor thrmead
 * css vendor prefix
 * on('webkitTransitionEnd transitionend') : 이벤트 두개에 각각.
+
+- promise, when, deferred, thenable object
+- web worker!
+- $.extend(userOption, options) (::= java extends) vs. prototype chaining
