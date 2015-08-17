@@ -1,11 +1,4 @@
 /*
-## 강의
-1. 온라인 / 오프라인
-- 오프라인일 때 localStorage에 저장하기
-- 온라인일 때 서버에 싱크 맞추기
-2. 뒤로 가기.
-- pushState활용하기
-
 ## Offline Sync
 (ls == localStorage)
 ### 온라인
@@ -46,9 +39,7 @@ var TODOSync = {
     add: function(todo, callback) {
         if(navigator.onLine) {
             $.ajax({ type: "PUT", url: this.url, data: { todo: todo }, contentType: this.contentType,
-            }).done(function(data){
-                callback(data);
-            });
+            }).done(callback);
         } else {
             callback({todo:todo, insertId:TODOSync.offlineID});
         }
@@ -70,25 +61,21 @@ var TODOSync = {
 
         //ls에 업데이트
         var todoObj = JSON.parse(localStorage.getItem(param.key));
-        todoObj.completed = todoObj.completed=='completed'? null : 'completed';
+        todoObj.completed = param.completed=='completed'? null : 'completed';
         localStorage.setItem(param.key, JSON.stringify(todoObj));
     },
     remove: function(param, callback) {
         if(navigator.onLine) {
             $.ajax({ type: "DELETE", url: this.url+"/"+param.key, data: { completed: param.completed }, contentType: this.contentType,
-            }).done(function(data){
-                console.log("UP REMOVED", param.key);
-                callback(data);
-            });
+            }).done(callback);
         } else {
-            callback({ completed: param.completed }); //필요한가?
+            callback({ completed: param.completed });
 
             //ls의 removed에 키 넣기
             var removedArr = JSON.parse(localStorage.getItem('removed'));
             removedArr.push(param.key);
             localStorage.setItem('removed', JSON.stringify(removedArr));
         }
-
         //ls에 업데이트
         localStorage.removeItem(param.key);
     }
@@ -215,7 +202,6 @@ var TODO = {
             /* TODO: map으로 개선. append를 TODO내에서 하지 않는다.*/
             for(i in json){
                 var item = json[json.length-i-1]; // item 역순정렬
-                console.log(item);
                 var completed = item.completed==1? 'completed' : null;
                 TODO.appendTODOHTML(item.todo, item.id, completed);
                 if(completed!=null) $("#todo-list li:last-child input").attr("checked", true);
@@ -226,27 +212,24 @@ var TODO = {
         //오프라인에서 지웠던 것들의 배열을 받아와 서버에서도 지워준다.
         var removedArr = JSON.parse(localStorage.getItem('removed'));
 
+        var def = $.Deferred();
+
         for(i in removedArr) {
-            console.log('arr: ', removedArr[i])
             TODOSync.remove({
                 "key": removedArr[i]
             }, function() {
-                console.log('remove succed');
+                if(i==removedArr.length-1) def.resolve();
             });
         }
+        return def;
     },
     initTODO: function(e) {
         // online: offline에서 지운 것들이 남아있다면 지운 후 TODO를 받아 그려준다.
         if(navigator.onLine) {
+            // $when은 thenable한 것을 넣어서 resolve를 반환받아주어야 한다.
             if(localStorage.getItem('removed')) {
-                // ##디버그 필요: removeFromOffline이 모두 끝난 후 getTODO를 하고싶은데 그게 안된다.
-                $.when( TODO.removeFromOffline() ).done(function() {
-                    console.log("getTODO!!!!!");
-                    TODO.getTODO();
-                });
-            } else {
-                TODO.getTODO();
-            }
+                $.when( TODO.removeFromOffline() ).done(TODO.getTODO());
+            } else {TODO.getTODO();}
         } else {
             // offline: ls에서 데이터를 가져와 넣어준다.
             var keys = Object.keys(localStorage), i = 0;
@@ -256,9 +239,7 @@ var TODO = {
             }
 
             //removed된 obj들의 key가 들어갈 ls를 만든다.
-            if(!localStorage.getItem('removed')) {
-                localStorage.setItem('removed', '[]');
-            }
+            if(!localStorage.getItem('removed')) localStorage.setItem('removed', '[]');
         }
     }
 }
