@@ -130,17 +130,19 @@ var DO = {
 		for(var i = 0, len = data.length; i < len; i++){
 			var eachEle = data[i];
 			var newElement = this.eleCompleted.cloneNode(true);
-			//apply data 
-			if(eachEle.completed != 0){
-				newElement.classList.add("completed");
+			
+			//applied data 
+			if(eachEle.completed === 1){
+				newElement.className = "completed";
 				newElement.querySelector("input").checked = true;
-			}		
+			} else 
+				newElement.className = "";
 			newElement.dataset.idTodo = eachEle.id;
 			newElement.querySelector(".view label").innerHTML = eachEle.todo;
+			
 			//set css
-			newElement.style.transition = "opacity 0.5s ease-in";
-			newElement.style.opacity = 1;
-			newElement.style.display = "block";//더 늦게 block 할 방법 없을까 아니면 block해도 차이 없나?
+			this.fadeIn(newElement, 0.7);
+			
 			//DOM
  			frag.appendChild(newElement);
 		}
@@ -153,10 +155,9 @@ var DO = {
 		if((evt.keyCode == this.ENTER_KEYCODE) && (sTxt != "")){
 			DOSync.addTo(sTxt, function(addTodo){
 				console.log("just added !" + addTodo);
-				var newCompleted = this.copyLi(sTxt, addTodo)
-				
+				var newCompleted = this.copyLi(sTxt, addTodo);				
 				this.todoLists.insertAdjacentElement('afterbegin', newCompleted);
-				newCompleted.style.display = "block";	
+				newCompleted.className = "";	
 
 				this.fadeIn(newCompleted, 0.5);
 				this.txtInput.value = "";				
@@ -179,7 +180,7 @@ var DO = {
 	 
 	checkingCompletedTo : function(evt){
 	 var checkedLi = evt.target.parentNode.parentNode;
-	 var isCompleted = (checkedLi.childNodes[1].childNodes[1].checked)?"1":"0";
+	 var isCompleted = (checkedLi.childNodes[1].childNodes[1].checked)? "1" : "0";
 	 
 		DOSync.completedTo({"idTodo" :checkedLi.dataset.idTodo, "isCompleted" : isCompleted},
 			function() {checkedLi.classList.toggle("completed");}
