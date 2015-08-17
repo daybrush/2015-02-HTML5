@@ -120,10 +120,10 @@ var TODO = {
 				history.pushState({"method":"all"},null,"index.html"); //파라미터, 타이틀명, 페이지명 
 			} else if(href === "active") {
 				this.activeView();
-				history.pushState({"method":"active"},null,"active");
+				history.pushState({"method":"active"},null,"#/active");
 			} else if(href === "completed") {
 				this.completedView();
-				history.pushState({"method":"completed"},null,"completed");
+				history.pushState({"method":"completed"},null,"#/completed");
 			}
 		}
 		e.preventDefault(); //a 태그라서 페이지 이동하므로 막아줌 
@@ -152,9 +152,7 @@ var TODO = {
 	// },
 	get : function() {
 		TODOSync.get(function(e){
-			e = e.sort(function(a,b){
-				return a.id > b.id;
-			});
+			
 			e.forEach(function(arr){
 				var completed = arr.completed == 1 ? "completed" : null;
 				var todoLi = this.build(arr.todo, arr.id, completed);
@@ -162,10 +160,10 @@ var TODO = {
 			}.bind(this));
 		}.bind(this));
 	},
-	build : function(enteredTitle, key, completed, opacityVal) {
+	build : function(enteredTitle, key, completed) {
 		var source = document.getElementById("todo-template").innerHTML;
 		var template = Handlebars.compile(source);
-		var context = {title : enteredTitle, key : key, completed : completed, val:opacityVal === undefined?1:opacityVal};
+		var context = {title : enteredTitle, key : key, completed : completed};
 		var todo = template(context);
 
 		return todo;
@@ -178,16 +176,15 @@ var TODO = {
 			TODOSync.add(todo, function(json) {
 				console.log(json);
 
-				var todoLi = this.build(todo, json.insertId,0,0);	//key값 넣어줌 
-				document.getElementById("todo-list").insertAdjacentHTML('afterbegin', todoLi);
+				var todoLi = this.build(todo, json.insertId);	//key값 넣어줌 
+				document.getElementById("todo-list").insertAdjacentHTML('beforeend', todoLi);
 				document.getElementById("new-todo").value = "";
 					
-				var target = document.getElementById("todo-list").querySelector("li:nth-child(1)");
-				// target.className = "appendig";
+				var target = document.getElementById("todo-list").querySelector("li:nth-last-child(1)");
+				target.className = "appending";	
 
 		    	setTimeout(function () {
-		       	 	// target.className = "";
-		       		target.style.opacity = 1; 	
+		    		target.className = "";
 		   	 	}, 100);
 
 
