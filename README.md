@@ -30,6 +30,7 @@ ex) git checkout -b mixed
 
 ### 5. 커밋
 ```
+git pull upstream 본인_아이디 
 git status //확인
 git rm 파일명 //삭제된 파일
 git add 파일명(or * 모두) // 추가/변경 파일
@@ -43,11 +44,6 @@ ex) git push origin mixed
 ```
 
 ### 6. 교수한데 pull request
-```
-git push upstream 본인_아이디 
-ex) git push upstream 본인_아이디
-
-```
 [참고](https://github.com/NHNNEXT/2015-02-HTML5/wiki/PR%EB%B3%B4%EB%82%B4%EB%8A%94-%EB%B0%A9%EB%B2%95)
 
 ### 7. 교수의 review을 확인 후 수정하고 4번 부터 시작.
