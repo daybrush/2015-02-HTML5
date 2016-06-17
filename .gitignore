@@ -1,0 +1,10 @@
+.project
+*~
+*.diff
+*.patch
+.DS_Store
+.settings
+node_modules
+*.min.js
+TODO
+doc/
