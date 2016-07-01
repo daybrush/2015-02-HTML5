@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		if(target) {
 			if(target.nodeName == "INPUT")
 				checkedTodo(e);
-			else if(target.nodeName == "BUTTON" && target.className == "destroy")
+			else if(target.nodeName == "BUTTON" && target.classList.contains("destroy"))
 				removeTodo(e);
 		}
 
