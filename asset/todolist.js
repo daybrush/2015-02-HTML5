@@ -10,27 +10,6 @@ function changeTemplate(sample, data) {
 	return html;
 }
 
-var _duration = 500;
-var _targetHeight = 58;
-var _startTime;
-var _appendTarget;
-function _addTodo() {
-	if(!_appendTarget)
-		return;
-		
-	var now = Date.now() - _startTime;
-	if(_duration <= now) {
-		_appendTarget.className = "";
-		_appendTarget.style.height = "";
-		_appendTarget = "";
-		return;
-	}
-	var height = parseInt(now/_duration * _targetHeight);
-	
-	_appendTarget.style.height = height + "px";
-	
-	requestAnimationFrame(_addTodo);
-}
 
 function addTodo(v) {
 	if(!v)
@@ -41,13 +20,38 @@ function addTodo(v) {
 	listTodo.insertAdjacentHTML("afterbegin", html);
 	var li = listTodo.querySelector(".appending");
 	
-	_startTime = Date.now();
-	_appendTarget = li;
+
 	
-	_addTodo();
+	var _duration = 500;
+	var _targetHeight = 58;
+	var _startTime = 0;
+	requestAnimationFrame(function _addTodo(t) {
+		if(!li)
+			return;
+	
+		if(!_startTime)
+			_startTime = t;
+			
+			
+		var now = t - _startTime;
+		if(_duration <= now) {
+			li.className = "";
+			li.style.height = "";
+			return;
+		}
+		var height = parseInt(now/_duration * _targetHeight);
+		
+		li.style.height = height + "px";
+		
+		requestAnimationFrame(_addTodo);
+	});
 }
 function completeTodo(li, checked) {
-	li.className = checked ? "completed" : "";
+	if(checked)
+		li.classList.add("completed");
+	else
+		li.classList.remove("completed");
+		
 }
 function _removeTodo(li) {
 	//li.parentNode.removeChild(li);
@@ -56,15 +60,42 @@ function _removeTodo(li) {
 }
 function removeTodo(e) {
 	var li = e.target.parentNode.parentNode;
-	li.className += " deleting";
-	setTimeout(function() {
+		li.classList.add("deleting")
+	li.addEventListener("transitionend", function(e) {
 		_removeTodo(li);
-	}, 1500);
+	})
 }
 function checkedTodo(e) {
 	var input = e.target;
 	var li = input.parentNode.parentNode;
 	completeTodo(li, input.checked);
+}
+
+var autoDelegateTarget= {
+	"toggle" : checkedTodo,
+	"destroy" : removeTodo,
+	"test" : {
+		"test1" : function(e) {},
+		"test2" : function(e) {},
+	}
+}
+/*
+	O(n^2)
+	
+*/
+function autoDelegate(autoList, list, e) {
+	var length = list.length;
+	var obj;
+	for(var i = 0; i < length; ++i) {
+		if(!(obj = autoList[list[i]]))
+			continue;
+		if(typeof obj === "function")
+			obj(e);
+		else
+			autoDelegate(obj, list, e)
+		
+		return;
+	}
 }
 document.addEventListener("DOMContentLoaded", function() {
 	var inputTodo = document.getElementById("new-todo");
@@ -76,15 +107,11 @@ document.addEventListener("DOMContentLoaded", function() {
 			inputTodo.value = "";
 		}
 	});	
+	
 	listTodo = document.getElementById("todo-list");
 	listTodo.addEventListener("click", function(e) {
 		var target = e.target;
-		if(target) {
-			if(target.nodeName == "INPUT")
-				checkedTodo(e);
-			else if(target.nodeName == "BUTTON" && target.className == "destroy")
-				removeTodo(e);
-		}
-
+		var classList = target.classList, length = classList.length;
+		autoDelegate(autoDelegateTarget, classList, e);
 	});
 });
