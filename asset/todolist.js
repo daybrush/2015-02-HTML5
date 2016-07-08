@@ -29,8 +29,6 @@ function addTodo(v) {
 		if(!li)
 			return;
 	
-		console.log(arguments);
-		
 		if(!_startTime)
 			_startTime = t;
 			
@@ -49,7 +47,11 @@ function addTodo(v) {
 	});
 }
 function completeTodo(li, checked) {
-	li.className = checked ? "completed" : "";
+	if(checked)
+		li.classList.add("completed");
+	else
+		li.classList.remove("completed");
+		
 }
 function _removeTodo(li) {
 	//li.parentNode.removeChild(li);
@@ -58,7 +60,7 @@ function _removeTodo(li) {
 }
 function removeTodo(e) {
 	var li = e.target.parentNode.parentNode;
-	li.className += " deleting";
+		li.classList.add("deleting")
 	li.addEventListener("transitionend", function(e) {
 		_removeTodo(li);
 	})
@@ -67,6 +69,33 @@ function checkedTodo(e) {
 	var input = e.target;
 	var li = input.parentNode.parentNode;
 	completeTodo(li, input.checked);
+}
+
+var autoDelegateTarget= {
+	"toggle" : checkedTodo,
+	"destroy" : removeTodo,
+	"test" : {
+		"test1" : function(e) {},
+		"test2" : function(e) {},
+	}
+}
+/*
+	O(n^2)
+	
+*/
+function autoDelegate(autoList, list, e) {
+	var length = list.length;
+	var obj;
+	for(var i = 0; i < length; ++i) {
+		if(!(obj = autoList[list[i]]))
+			continue;
+		if(typeof obj === "function")
+			obj(e);
+		else
+			autoDelegate(obj, list, e)
+		
+		return;
+	}
 }
 document.addEventListener("DOMContentLoaded", function() {
 	var inputTodo = document.getElementById("new-todo");
@@ -78,15 +107,11 @@ document.addEventListener("DOMContentLoaded", function() {
 			inputTodo.value = "";
 		}
 	});	
+	
 	listTodo = document.getElementById("todo-list");
 	listTodo.addEventListener("click", function(e) {
 		var target = e.target;
-		if(target) {
-			if(target.nodeName == "INPUT")
-				checkedTodo(e);
-			else if(target.nodeName == "BUTTON" && target.classList.contains("destroy"))
-				removeTodo(e);
-		}
-
+		var classList = target.classList, length = classList.length;
+		autoDelegate(autoDelegateTarget, classList, e);
 	});
 });
