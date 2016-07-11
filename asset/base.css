@@ -201,8 +201,6 @@ label[for='toggle-all'] {
 
 #todo-list li.appending{
 	height: 0px;
-	-webkit-transition: none;
-	transition: none;
 }
 
 #todo-list li.deleting{
