@@ -12,19 +12,6 @@ function changeTemplate(sample, data) {
 
 var todoSync = {
 	serverAddress : "http://128.199.76.9:8002/daybrush/",
-	get: function() {
-		var xhr = this.initXHR();
-		xhr.addEventListener("load", function(e) {
-
-			var data = JSON.parse(xhr.responseText), length = data.length;
-			console.log(data);
-			for(var i = length - 1; i >= 0; --i) {
-				TODO._add(data[i]);
-				//todoSync.remove(data[i].id)
-			}
-		});
-		xhr.send();
-	},
 	initXHR: function(method, address) {
 		method = method || "GET";
 		address = address || "";
@@ -34,6 +21,17 @@ var todoSync = {
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=UTF-8")
 		
 		return xhr;
+	},
+	get: function() {
+		var xhr = this.initXHR();
+		xhr.addEventListener("load", function(e) {
+
+			var data = JSON.parse(xhr.responseText), length = data.length;
+			for(var i = length - 1; i >= 0; --i) {
+				TODO._add(data[i]);
+			}
+		});
+		xhr.send();
 	},
 	add: function(todo) {
 		var xhr = this.initXHR("POST");
@@ -63,6 +61,7 @@ var todoSync = {
 		});	
 	}
 }
+
 var TODO = {
 	list : "",
 	init : function() {
@@ -88,8 +87,8 @@ var TODO = {
 		
 		var title = data.todo;
 		var id = data.id || data.insertId;
-		var className = (typeof data.completed === "undefined") ? "appending" : (data.completed ? "complete" : "");
-		var checked = (className === "complete")? "checked" : "";
+		var className = (typeof data.completed === "undefined") ? "appending" : (data.completed ? "completed" : "");
+		var checked = (className === "completed")? "checked" : "";
 		var html = changeTemplate(SAMPLE_TODO, {title:title, id : id, className:className, checked: checked});
 		
 		this.list.insertAdjacentHTML("afterbegin", html);
@@ -128,7 +127,10 @@ var TODO = {
 		if(checked)
 			li.classList.add("completed");
 		else
-			li.classList.remove("completed");		
+			li.classList.remove("completed");
+		
+		var id = li.getAttribute("data-id");
+		todoSync.complete(id, checked);
 	},
 	event : {
 		destroy : function(e) {
