@@ -11,6 +11,7 @@ function changeTemplate(sample, data) {
 }
 
 var todoSync = {
+	isOnline : true,
 	serverAddress : "http://128.199.76.9:8002/daybrush/",
 	initXHR: function(method, address) {
 		method = method || "GET";
@@ -23,42 +24,58 @@ var todoSync = {
 		return xhr;
 	},
 	get: function() {
-		var xhr = this.initXHR();
-		xhr.addEventListener("load", function(e) {
-
-			var data = JSON.parse(xhr.responseText), length = data.length;
-			for(var i = length - 1; i >= 0; --i) {
-				TODO._add(data[i]);
-			}
-		});
-		xhr.send();
+		if(this.isOnline) {
+			var xhr = this.initXHR();
+			xhr.addEventListener("load", function(e) {
+	
+				var data = JSON.parse(xhr.responseText), length = data.length;
+				for(var i = length - 1; i >= 0; --i) {
+					TODO._add(data[i]);
+				}
+			});
+			xhr.send();
+		} else {
+			
+		}
 	},
 	add: function(todo) {
-		var xhr = this.initXHR("POST");
-		xhr.addEventListener("load", function(e) {
-			var data = JSON.parse(xhr.responseText);
-			data.todo = todo;
-			console.log(data);
-			TODO._add(data);
-		});	
-		xhr.send("todo=" + todo);
+		if(this.isOnline) {
+			var xhr = this.initXHR("POST");
+			xhr.addEventListener("load", function(e) {
+				var data = JSON.parse(xhr.responseText);
+				data.todo = todo;
+				console.log(data);
+				TODO._add(data);
+			});	
+			xhr.send("todo=" + todo);
+		} else {
+			
+		}
 	},
 	complete : function(id, isComplete) {
-		var xhr = this.initXHR("PUT", id);
-		xhr.addEventListener("load", function(e) {
-			var data = JSON.parse(xhr.responseText);
-		});	
-		xhr.send("completed=" + (isComplete * 1));
+		if(this.isOnline) {
+			var xhr = this.initXHR("PUT", id);
+			xhr.addEventListener("load", function(e) {
+				var data = JSON.parse(xhr.responseText);
+			});	
+			xhr.send("completed=" + (isComplete * 1));
+		} else {
+			
+		}
 	},
 	remove :function(id) {
-		var xhr = this.initXHR("DELETE", id);
-		xhr.addEventListener("load", function(e) {
-			var data = JSON.parse(xhr.responseText);
-		});	
-		xhr.send("");
-		xhr.addEventListener("load", function(e) {
-			console.log("remove" + id);
-		});	
+		if(this.isOnline) {
+			var xhr = this.initXHR("DELETE", id);
+			xhr.addEventListener("load", function(e) {
+				var data = JSON.parse(xhr.responseText);
+			});	
+			xhr.send("");
+			xhr.addEventListener("load", function(e) {
+				console.log("remove" + id);
+			});	
+		} else {
+			
+		}
 	}
 }
 
@@ -73,7 +90,77 @@ var TODO = {
 			console.log(e, target, classList);
 			autoDelegate(TODO.event, classList, e);
 		});
+		window.addEventListener("online", this.onofflineListener);
+		window.addEventListener("offline", this.onofflineListener);
+		window.addEventListener("popstate", this.changeURLFilter.bind(this));
+		document.getElementById("filters").addEventListener("click",this.changeState.bind(this));
+		
+		this.onofflineListener();
 		todoSync.get();
+		//this._changeState("all");
+	},
+	onofflineListener : function() {
+		if(navigator.onLine) {
+			document.getElementById("header").classList.remove("offline");
+		} else {
+			document.getElementById("header").classList.add("offline");			
+		}
+		todoSync.isOnline = navigator.onLine;
+	},
+	changeURLFilter : function(e) {
+		
+		var method;
+		
+		if(e.state) {
+			method = e.state.method || "all";
+		} else {
+			method = "all";
+		}
+			
+		if(!this.state[method])
+			return;
+			
+
+		
+		this.state[method]();
+			
+		
+	},
+	changeState : function(e) {
+		e.preventDefault();
+		var target = e.target;
+		var tagname = target.tagName.toLowerCase();
+		if(tagname !== "a")
+			return;
+			
+		var href = target.getAttribute("href");
+		this._changeState(href);
+	},
+	_changeState : function(method) {
+		this.state[method]();
+		history.pushState({"method":method}, null, "index.html");				
+	},
+	state : {
+		"all" : function() {
+			document.getElementById("todo-list").className = "";
+			this.selectNavigator(0);
+		},
+		"active" : function() {
+			document.getElementById("todo-list").className = "all-active";
+			this.selectNavigator(1);
+		},
+		"completed" : function() {
+			document.getElementById("todo-list").className = "all-completed";
+			this.selectNavigator(2);
+		},
+		selectNavigator : function(index) {
+			var navigationList = document.querySelectorAll("#filters a");
+			navigationList[this.selectedIndex].classList.remove("selected");
+			navigationList[index].classList.add("selected");
+			
+			this.selectedIndex = index;
+		},
+		selectedIndex : 0
 	},
 	clear : function() {
 		this.list.innerHTML = "";
@@ -148,7 +235,8 @@ var TODO = {
 			var li = input.parentNode.parentNode;
 			TODO.complete(li, input.checked);	
 		}
-	}
+	},
+	
 }
 
 /*
