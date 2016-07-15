@@ -243,8 +243,11 @@ var TODO = {
 	O(n^2)
 	
 */
+<<<<<<< HEAD
 
 //asdasdasdasd
+=======
+>>>>>>> 89f535c2c35e6e0b2474cbb76cd9ae21c5b5b60f
 function autoDelegate(autoList, list, e) {
 	var length = list.length;
 	var obj;
