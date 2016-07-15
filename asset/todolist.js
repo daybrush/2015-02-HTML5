@@ -51,7 +51,7 @@ var todoSync = {
 		} else {
 			
 		}
-	},
+	},//
 	complete : function(id, isComplete) {
 		if(this.isOnline) {
 			var xhr = this.initXHR("PUT", id);
