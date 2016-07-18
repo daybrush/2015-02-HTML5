@@ -94,8 +94,6 @@ var localSync = {
 				todoSync.get();
 				return;
 			}
-
-			
 			var todo = _list[index];
 			console.log("update" + index +"-" + todo.todo);
 			var xhr;
