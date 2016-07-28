@@ -9,7 +9,126 @@ function changeTemplate(sample, data) {
 	}
 	return html;
 }
-
+var localSync = {
+	list : [],
+	add : function(todo) {
+		//random....... 문제가 많은 아이디...
+		var id = "_" + Math.random(0, 10000);
+		
+		var _todo = {todo:todo, id:id, status: "add", offlineAdd:true , offline:true};
+		this.list.splice(0,0, _todo);
+		//complete add / completed / remove
+		
+		TODO._add(_todo);
+		
+		this.save();
+	},
+	getIndex: function(id) {
+		var length = this.list.length;
+		
+		var _id;
+		for(var i = 0; i < length; ++i) {
+			_id = this.list[i].id || this.list[i].insertId;
+			if(id == _id) {
+				return i;
+			}
+		}
+		
+		return -1;
+	},
+	complete: function(id, isCompleted) {
+		var index = this.getIndex(id);
+		if(index < 0)
+			return;
+			
+		this.list[index].status = "completed";
+		this.list[index].completed = isCompleted;
+		this.save();
+	},
+	remove : function(id) {
+		
+		var index = this.getIndex(id);
+		if(index < 0)
+			return;
+			
+		var data = this.list[index];
+		if(data.offlineAdd) {
+			this.list.splice(index, 1);
+		} else {
+			data.status = "remove";
+		}
+		this.save();
+	},
+	get : function() {
+		var data = JSON.parse(localStorage.todoList), length = data.length;
+		this.list = data;
+		
+		for(var i = length - 1; i >= 0; --i) {
+			TODO._add(data[i]);
+		}
+	},
+	save : function(list) {
+		console.log(list);
+		this.list = list || this.list;	
+		localStorage.todoList = JSON.stringify(this.list);
+		if(!list)
+			localStorage.update = 1;
+	},
+	update : function(list) {
+		if(!todoSync.isOnline)
+			return;
+			
+		
+		
+		console.trace("update!!");
+		
+		var _list = this.list, length = _list.length;
+		if(list)
+			this.list = list;
+			
+			
+		var index = -1;
+		var func = function() {
+			index = index + 1;
+			if( index >= length) {
+				todoSync.get();
+				return;
+			}
+			var todo = _list[index];
+			console.log("update" + index +"-" + todo.todo);
+			var xhr;
+			if(todo.offlineAdd) {
+				xhr = todoSync.add(todo.todo);
+				xhr.addEventListener("load", function () {
+					var data = JSON.parse(xhr.responseText);
+					if(todo.status === "completed") {
+						var xhr2 = todoSync.complete(data.insertId, todo.isCompleted);
+						xhr2.addEventListener("load", function() {
+							func();
+						});
+					} else {
+						func();
+					}
+				});
+			} else {
+				if(todo.status === "completed")
+					xhr = todoSync.complete(todo.insertId || todo.id, todo.completed);
+				else if(todo.status === "remove")
+					xhr = todoSync.remove(todo.insertId || todo.id);
+					
+				if(xhr)
+					xhr.addEventListener("load", function() {
+						func();
+					});
+			}
+		};
+		func();
+		
+		
+		localStorage.update = "0";
+	}
+	
+}
 var todoSync = {
 	isOnline : true,
 	serverAddress : "http://128.199.76.9:8002/daybrush/",
@@ -24,6 +143,7 @@ var todoSync = {
 		return xhr;
 	},
 	get: function() {
+		TODO.list.innerHTML = "";
 		if(this.isOnline) {
 			var xhr = this.initXHR();
 			xhr.addEventListener("load", function(e) {
@@ -32,50 +152,48 @@ var todoSync = {
 				for(var i = length - 1; i >= 0; --i) {
 					TODO._add(data[i]);
 				}
+				if(localStorage.update == "1")
+					localSync.update(data);				
+				else
+					localSync.save(data);
 			});
 			xhr.send();
-		} else {
+
+			//localSync.save(data);
 			
+		} else {
+			localSync.get();
 		}
+		return xhr;
 	},
-	add: function(todo) {
+	add: function(todo, callback) {
 		if(this.isOnline) {
 			var xhr = this.initXHR("POST");
-			xhr.addEventListener("load", function(e) {
-				var data = JSON.parse(xhr.responseText);
-				data.todo = todo;
-				console.log(data);
-				TODO._add(data);
-			});	
 			xhr.send("todo=" + todo);
 		} else {
-			
+			localSync.add(todo);
 		}
+		return xhr;
 	},///
 	complete : function(id, isComplete) {
 		if(this.isOnline) {
-			var xhr = this.initXHR("PUT", id);
-			xhr.addEventListener("load", function(e) {
-				var data = JSON.parse(xhr.responseText);
-			});	
+			var xhr = this.initXHR("PUT", id);	
 			xhr.send("completed=" + (isComplete * 1));
 		} else {
-			
+			localSync.complete(id, isComplete);
 		}
+		
+		return xhr;
 	},
 	remove :function(id) {
 		if(this.isOnline) {
 			var xhr = this.initXHR("DELETE", id);
-			xhr.addEventListener("load", function(e) {
-				var data = JSON.parse(xhr.responseText);
-			});	
 			xhr.send("");
-			xhr.addEventListener("load", function(e) {
-				console.log("remove" + id);
-			});	
 		} else {
-			
+			localSync.remove(id);
 		}
+		
+		return xhr;
 	}
 }
 
@@ -95,17 +213,19 @@ var TODO = {
 		window.addEventListener("popstate", this.changeURLFilter.bind(this));
 		document.getElementById("filters").addEventListener("click",this.changeState.bind(this));
 		
-		this.onofflineListener();
+		this.onofflineListener(true);
 		todoSync.get();
 		//this._changeState("all");
 	},
-	onofflineListener : function() {
+	onofflineListener : function(isUpdate) {
+		todoSync.isOnline = navigator.onLine;
 		if(navigator.onLine) {
+			if(isUpdate != true)
+				localSync.update();
 			document.getElementById("header").classList.remove("offline");
 		} else {
 			document.getElementById("header").classList.add("offline");			
 		}
-		todoSync.isOnline = navigator.onLine;
 	},
 	changeURLFilter : function(e) {
 		
@@ -166,12 +286,21 @@ var TODO = {
 		this.list.innerHTML = "";
 	},
 	add: function(v) {
-		todoSync.add(v);	
+		var xhr = todoSync.add(v);
+		if(xhr)
+		xhr.addEventListener("load", function(e) {
+			console.log(e);
+			var data = JSON.parse(xhr.responseText);
+			data.todo = v;
+			TODO._add(data);
+		});	
 	},
 	_add: function(data) {
 		if(!data)
 			return;
-		
+		if(data.status === "remove")
+			return;
+			
 		var title = data.todo;
 		var id = data.id || data.insertId;
 		var className = (typeof data.completed === "undefined") ? "appending" : (data.completed ? "completed" : "");
@@ -243,6 +372,8 @@ var TODO = {
 	O(n^2)
 	
 */
+
+//asdasdasdasd
 function autoDelegate(autoList, list, e) {
 	var length = list.length;
 	var obj;
