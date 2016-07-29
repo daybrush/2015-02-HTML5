@@ -80,8 +80,6 @@ var localSync = {
 			
 		
 		
-		console.log("update!!");
-		
 		var _list = this.list, length = _list.length;
 		if(list)
 			this.list = list;
@@ -375,7 +373,6 @@ var TODO = {
 				data.todo = v;
 				TODO._add(data);				
 			});
-
 		});	
 	},
 	_add: function(data) {
