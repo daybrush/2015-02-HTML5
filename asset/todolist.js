@@ -80,17 +80,17 @@ var localSync = {
 			
 		
 		
-		console.trace("update!!");
+		console.log("update!!");
 		
 		var _list = this.list, length = _list.length;
 		if(list)
 			this.list = list;
 			
 			
-		var index = -1;
+		var index = length;
 		var func = function() {
-			index = index + 1;
-			if( index >= length) {
+			--index;
+			if( index < 0) {
 				todoSync.get();
 				return;
 			}
@@ -129,6 +129,89 @@ var localSync = {
 	}
 	
 }
+var todoFetch  = {
+	isOnline : true,
+	serverAddress : "http://128.199.76.9:8002/daybrush/",
+	initFetch: function(method, address, body) {
+		method = method || "GET";
+		address = address || "";
+
+		var myHeaders = new Headers();
+		myHeaders.append("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
+		
+		var info = {
+			method: method,
+			headers : myHeaders,
+		};
+		if(body) {
+/*
+			var data = new FormData();
+			var length = 0;
+			for(var key in body) {
+				console.log(key, body[key]);
+				data.append( key, body[key] );
+				length++;
+			}
+*/
+			//myHeaders.append("Content-Length", length);
+			info.body = body;
+		}
+		return fetch(this.serverAddress + address, info);
+	},
+	get: function() {
+		TODO.list.innerHTML = "";
+		var fetch;
+		if(this.isOnline) {
+			fetch = this.initFetch();
+			fetch.then(function(response) {
+				return response.json().then(function(data) {			
+					var length = data.length;
+					for(var i = length - 1; i >= 0; --i) {
+						TODO._add(data[i]);
+					}
+					if(localStorage.update == "1")
+						localSync.update(data);				
+					else
+						localSync.save(data);
+						
+				});
+			});
+			
+		} else {
+			localSync.get();
+		}
+		return fetch;
+	},
+	add: function(todo, callback) {
+		if(this.isOnline) {
+			var fetch = this.initFetch("POST", "", "todo="+todo);
+			fetch.then(callback);
+		} else {
+			localSync.add(todo);
+		}
+		return fetch;
+	},///
+	complete : function(id, isComplete) {
+		if(this.isOnline) {
+			var fetch = this.initFetch("PUT", id, "completed="+(isComplete*1));
+		} else {
+			localSync.complete(id, isComplete);
+		}
+		
+		return fetch;
+	},
+	remove :function(id) {
+		if(this.isOnline) {
+			var fetch = this.initFetch("DELETE", id);
+		} else {
+			localSync.remove(id);
+		}
+		
+		return fetch;
+	}
+}
+
+
 var todoSync = {
 	isOnline : true,
 	serverAddress : "http://128.199.76.9:8002/daybrush/",
@@ -197,6 +280,7 @@ var todoSync = {
 	}
 }
 
+todoSync  = todoFetch;
 var TODO = {
 	list : "",
 	init : function() {
@@ -286,13 +370,12 @@ var TODO = {
 		this.list.innerHTML = "";
 	},
 	add: function(v) {
-		var xhr = todoSync.add(v);
-		if(xhr)
-		xhr.addEventListener("load", function(e) {
-			console.log(e);
-			var data = JSON.parse(xhr.responseText);
-			data.todo = v;
-			TODO._add(data);
+		var xhr = todoSync.add(v, function(r) {
+			return r.json().then(function(data) {
+				data.todo = v;
+				TODO._add(data);				
+			});
+
 		});	
 	},
 	_add: function(data) {
